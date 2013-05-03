@@ -1,0 +1,7 @@
+Users
+=====
+
+* Shortdesc: User behavior models controlling underlying applications in host modules.
+* Author: Kyeong Soo (Joseph) Kim (kyeongsoo.kim@gmail.com)
+* License: GPLv2
+* Requires: OMNeT++ 4.3 or later
