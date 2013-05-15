@@ -17,7 +17,7 @@
 //
 
 
-package inet.examples.ngoa.isp_traffic_shaping2;
+package inet.examples.ngoa.isp_traffic_shaping_cooperative;
 
 import inet.networklayer.autorouting.FlatNetworkConfigurator;
 import inet.nodes.access.NgnAccessModem;
