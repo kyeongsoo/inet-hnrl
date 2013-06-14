@@ -1,231 +1,55 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"
-lang="en" xml:lang="en">
-<head>
-<title>INET-HNRL GitHub Page@github.com</title>
-<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
-<meta name="generator" content="Org-mode"/>
-<meta name="generated" content="2010-12-01 Wed"/>
-<meta name="author" content="Kyeong Soo (Joseph) Kim"/>
-<meta name="description" content="level-1 org export template"/>
-<meta name="keywords" content=""/>
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
-  html { font-family: Times, serif; font-size: 12pt; }
-  .title  { text-align: center; }
-  .todo   { color: red; }
-  .done   { color: green; }
-  .tag    { background-color: #add8e6; font-weight:normal }
-  .target { }
-  .timestamp { color: #bebebe; }
-  .timestamp-kwd { color: #5f9ea0; }
-  p.verse { margin-left: 3% }
-  pre {
-	border: 1pt solid #AEBDCC;
-	background-color: #F3F5F7;
-	padding: 5pt;
-	font-family: courier, monospace;
-        font-size: 90%;
-        overflow:auto;
-  }
-  table { border-collapse: collapse; }
-  td, th { vertical-align: top; }
-  dt { font-weight: bold; }
-  div.figure { padding: 0.5em; }
-  div.figure p { text-align: center; }
-  .linenr { font-size:smaller }
-  .code-highlighted {background-color:#ffff00;}
-  .org-info-js_info-navigation { border-style:none; }
-  #org-info-js_console-label { font-size:10px; font-weight:bold;
-                               white-space:nowrap; }
-  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
-                                 font-weight:bold; }
-  /*]]>*/-->
-</style>
-<link rel="stylesheet" type="text/css" href="css/mystyle.css" />
-<script type="text/javascript">
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
-</script>
-</head>
-<body>
-<div id="content">
-<div id="org-div-home-and-up" style="text-align:right;font-size:70%;white-space:nowrap;">
- <a accesskey="h" href="https://github.com/kyeongsoo/inet-hnrl/"> UP </a>
- |
- <a accesskey="H" href="index.html"> HOME </a>
-</div>
+<!DOCTYPE html>
+<html>
 
-<h1 class="title">INET-HNRL GitHub Page@github.com</h1>
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="inet-hnrl : INET extension for optical, wireless, and their hybrid networks and protocols" />
 
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-<div id="table-of-contents">
-<h2>Table of Contents</h2>
-<div id="text-table-of-contents">
-<ul>
-<li><a href="#sec-1">Introduction </a></li>
-<li><a href="#sec-2">Models/Frameworks Implemented </a>
-<ul>
-<li><a href="#sec-2.1">Hybrid TDM/WDM-PON </a></li>
-<li><a href="#sec-2.2">ECR Framework </a></li>
-<li><a href="#sec-2.3">Wi-Fi-based Localization </a></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
+    <title>inet-hnrl</title>
+  </head>
 
-<div id="outline-container-1" class="outline-2">
-<h2 id="sec-1">Introduction </h2>
-<div class="outline-text-2" id="text-1">
+  <body>
 
-<p>This is the GitHub page of inet-hnrl &mdash; a new fork of <a href="https://github.com/inet-framework/inet">inet</a> being
-developed and maintained by the <a href="http://iat-hnrl.swan.ac.uk/">Hybrid Networking Research Laboratory (HNRL)</a> of <a href="http://www.swan.ac.uk/">Swansea University</a> in Wales UK &mdash; which provides new
-models in both optical and wireless networking and their hybrid. For
-updates and news, please visit the project <a href="https://github.com/kyeongsoo/inet-hnrl/wiki/INET-HNRL:-Models-for-Hybrid-Networking-Research">wiki</a>.
-</p>
-</div>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/kyeongsoo/inet-hnrl">View on GitHub</a>
 
-</div>
+          <h1 id="project_title">inet-hnrl</h1>
+          <h2 id="project_tagline">INET extension for optical, wireless, and their hybrid networks and protocols</h2>
 
-<div id="outline-container-2" class="outline-2">
-<h2 id="sec-2">Models/Frameworks Implemented </h2>
-<div class="outline-text-2" id="text-2">
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/kyeongsoo/inet-hnrl/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/kyeongsoo/inet-hnrl/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
 
-<p>Currently the following major models and research frameworks have been
-implemented:
-</p>
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="inet-hnrl-fork-of-inet-framework-for-hybrid-networking-research" class="anchor" href="#inet-hnrl-fork-of-inet-framework-for-hybrid-networking-research"><span class="octicon octicon-link"></span></a>INET-HNRL Fork of INET Framework for Hybrid Networking Research</h1>
 
-</div>
+<p>The INET-HNRL is a fork of the INET framework being developed and maintained by the <a href="http://iat-hnrl.swan.ac.uk/">Hybrid Networking Research Laboratory (HNRL)</a> of <a href="http://www.swan.ac.uk/">Swansea University</a> in Wales, UK — which provides models for network systems, components, and protocols in both optical and wireless networking and their hybrid. For updates and news, please visit the project <a href="https://github.com/kyeongsoo/inet-hnrl/wiki/INET-HNRL:-Models-for-Hybrid-Networking-Research">wiki</a>.</p>
 
-<div id="outline-container-2.1" class="outline-3">
-<h3 id="sec-2.1">Hybrid TDM/WDM-PON </h3>
-<div class="outline-text-3" id="text-2.1">
+<h2>
+<a name="getting-started" class="anchor" href="#getting-started"><span class="octicon octicon-link"></span></a>GETTING STARTED</h2>
+      </section>
+    </div>
 
-<p>This implements models for the hybrid TDM/WDM-PON under the Stanford
-University aCCESS-Hybrid PON (SUCCESS-HPON) architecture<sup><a class="footref" name="fnr.1" href="#fn.1">1</a></sup> <sup><a class="footref" name="fnr.2" href="#fn.2">2</a></sup>.
-Various design issues and the current status of implementations are
-described in a recent paper submitted to OMNeT++2011 workshop<sup><a class="footref" name="fnr.3" href="#fn.3">3</a></sup>.
-</p>
-<p>
-<img src="./img/success-hpon-small.png"  alt="./img/success-hpon-small.png" />
-</p>
-</div>
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">inet-hnrl maintained by <a href="https://github.com/kyeongsoo">kyeongsoo</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
 
-</div>
+    
 
-<div id="outline-container-2.2" class="outline-3">
-<h3 id="sec-2.2">ECR Framework </h3>
-<div class="outline-text-3" id="text-2.2">
-
-<p>This is the framework where one can carry out a comparison study of a
-new next-generation optical access (NGOA) architecture with respect to
-a reference, point-to-point architecture based on the notion of
-equivalent circuit rate (ECR)<sup><a class="footref" name="fnr.4" href="#fn.4">4</a></sup>. The configuration and NED files
-for this framework are located under "<a href="https://github.com/kyeongsoo/inet-hnrl/tree/master/examples/ngoa/">examples/ngoa</a>" directory, whose
-results are reported in recent submissions<sup><a class="footref" name="fnr.5" href="#fn.5">5</a></sup> <sup><a class="footref" name="fnr.6" href="#fn.6">6</a></sup> <sup><a class="footref" name="fnr.7" href="#fn.7">7</a></sup>.
-</p>
-<p>
-<img src="./img/ecr_framework-small.png"  alt="./img/ecr_framework-small.png" />
-</p>
-</div>
-
-</div>
-
-<div id="outline-container-2.3" class="outline-3">
-<h3 id="sec-2.3">Wi-Fi-based Localization </h3>
-<div class="outline-text-3" id="text-2.3">
-
-<p>In an indoor environment the accuracy of <a href="http://en.wikipedia.org/wiki/Global_Positioning_System">global positioning system (GPS)</a> &mdash; the most popular positioning system now &mdash; is often
-limited and, sometimes, the system itself becomes unusable. Due to a
-growing interest in location awareness services and a large number of
-Wi-Fi access points (APs) deployed, an alternative localization
-technique based on the received signal strength from APs has been
-extensively studied in the literature and already deployed in some
-mobile systems (e.g., smart phones). The models for Wi-Fi-based
-localization, which are still under active development, are for the
-investigation of various localization algorithms and evaluation of
-their performances in a realistic simulation environment.
-</p>
-<p>
-<img src="./img/wifi-robot.png"  alt="./img/wifi-robot.png" />
-</p>
-
-
-
-<hr/>
-
-
-
-
-
-
-
-
-</div>
-</div>
-</div>
-<div id="footnotes">
-<h2 class="footnotes">Footnotes: </h2>
-<div id="text-footnotes">
-<p class="footnote"><sup><a class="footnum" name="fn.1" href="#fnr.1">1</a></sup> Fu-Tai An, David Gutierrez, Kyeong Soo Kim, Jung Woo Lee, and
-Leonid G. Kazovsky, "SUCCESS-HPON: A next-generation optical access
-architecture for smooth migration from TDM-PON to WDM-PON," IEEE
-Communications Magazine &mdash; Optical Communications Supplement
-Special Issue on Optical Networking Testbeds (Part 2), vol. 43,
-no. 11, pp. S40-S47, Nov. 2005. (<a href="http://dx.doi.org/10.1109/MCOM.2005.1541698">IEEE</a>)
-</p>
-<p class="footnote"><sup><a class="footnum" name="fn.2" href="#fnr.2">2</a></sup> Kyeong Soo Kim, David Gutierrez, Fu-Tai An, and Leonid
-G. Kazovsky, "Design and performance analysis of scheduling algorithms
-for WDM-PON under SUCCESS-HPON architecture," IEEE/OSA Journal of
-Lightwave Technology, vol. 23, no. 11, pp. 3716-3731,
-Nov. 2005. (<a href="http://dx.doi.org/10.1109/JLT.2005.857729">IEEE</a>)
-</p>
-<p class="footnote"><sup><a class="footnum" name="fn.3" href="#fnr.3">3</a></sup> Kyeong Soo Kim, "Integration of OMNeT++ hybrid TDM/WDM-PON
-models into INET Framework," <i>submitted to OMNeT++ Workshop 2011</i>,
-Nov. 25, 2010. (<a href="http://iat-hnrl.swan.ac.uk/~kks/publications/hybrid_pon_omnetpp2011.pdf">HNRL</a>)
-</p>
-<p class="footnote"><sup><a class="footnum" name="fn.4" href="#fnr.4">4</a></sup> N. K. Shankaranarayanan, Zhimei Jiang, and Partho Mishra,
-"User-perceived performance of Web-browsing and interactive data in
-HFC cable access networks," Proc. of ICC 2001, Helsinki, Finland,
-vol. 4, pp. 1264-1268, Jun. 2001. (<a href="http://dx.doi.org/10.1109/ICC.2001.936895">IEEE</a>)
-</p>
-<p class="footnote"><sup><a class="footnum" name="fn.5" href="#fnr.5">5</a></sup> Kyeong Soo Kim, "An equivalent circuit rate-based study of
-next-generation optical access architectures," <i>presented at OMNeT++ Workshop 2010</i>, Malaga, Spain, Mar. 19, 2010. (<a href="http://portal.acm.org/citation.cfm?id=1808166">ACM</a>)
-</p>
-<p class="footnote"><sup><a class="footnum" name="fn.6" href="#fnr.6">6</a></sup> Kyeong Soo Kim, "An equivalent circuit rate-based study of
-10-Gb/s next-generation optical access architectures," <i>submitted to Access Systems and Networks Track of ICC 2011</i>, Sep. 19, 2010. (<a href="http://iat-hnrl.swan.ac.uk/~kks/publications/ecr_study_ngoa_icc2011_submitted.pdf">HNRL</a>)
-</p>
-<p class="footnote"><sup><a class="footnum" name="fn.7" href="#fnr.7">7</a></sup> Kyeong Soo Kim, "An equivalent circuit rate-based study of
-10-Gb/s next-generation optical access architectures," (Extended
-version) <i>submitted to OSA/IEEE Journal of Optical Communications and Networking (JOCN)</i>, Nov. 8, 2010. (<a href="http://iat-hnrl.swan.ac.uk/~kks/publications/ecr_study_ngoa_jocn_submitted.pdf">HNRL</a>)
-</p>
-</div>
-</div>
-<div id="postamble">
-<p class="date"> Date: 2010-12-01 Wed</p>
-<p class="creator">HTML generated by org-mode 6.33x in emacs 23</p>
-</div>
-</div>
-</body>
+  </body>
 </html>
