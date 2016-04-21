@@ -121,16 +121,12 @@ void BasicTokenBucketMeter::dumpStatus() {
 
 void BasicTokenBucketMeter::finish()
 {
-    std::stringstream ss_bits_metered, ss_bits_conformed, ss_pkts_metered, ss_pkts_conformed, ss_throughput;
-    ss_bits_metered << "number of bits metered";
-    ss_bits_conformed << "number of bits conformed";
-    ss_pkts_metered << "number of packets metered";
-    ss_pkts_conformed << "number of packets conformed";
+    std::stringstream ss_metered, ss_conformed, ss_throughput;
+    ss_metered << "number of packets metered";
+    ss_conformed << "number of packets conformed";
     ss_throughput << "bits/sec metered";
-    recordScalar((ss_bits_metered.str()).c_str(), numBitsMetered);
-    recordScalar((ss_bits_conformed.str()).c_str(), numBitsConformed);
-    recordScalar((ss_pkts_metered.str()).c_str(), numPktsMetered);
-    recordScalar((ss_pkts_conformed.str()).c_str(), numPktsConformed);
+    recordScalar((ss_metered.str()).c_str(), numPktsMetered);
+    recordScalar((ss_conformed.str()).c_str(), numPktsConformed);
     recordScalar((ss_throughput.str()).c_str(), numBitsMetered / (simTime() - simulation.getWarmupPeriod()).dbl());
     recordScalar("packet conformed rate", numPktsConformed / double(numPktsMetered));
 }
