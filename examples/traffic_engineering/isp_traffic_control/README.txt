@@ -28,3 +28,4 @@ References:
 [1] Kyeong Soo Kim, "On the excess bandwidth allocation in ISP traffic control
     for shared access networks," IEEE Communications Letters, vol. 18, no. 4,
     pp. 692-695, Apr., 2014.
+    [Online] Available: http://dx.doi.org/10.1109/LCOMM.2014.020414.132542

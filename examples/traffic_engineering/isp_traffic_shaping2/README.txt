@@ -26,6 +26,6 @@ The results from this work is published in [1].
 
 References:
 [1] Kyeong Soo Kim, "The effect of ISP traffic shaping on user-perceived
-    performances in broadband access networks," Proc. of the 4th International
-    Congress on Ultra Modern Telecommunications and Control Systems (ICUMT
-    2012), St. Petersburg, Russia, pp. 533-538, Oct. 2012.
+    performances in broadband shared access networks," Computer Networks,
+    vol. 70, pp. 192-209, Sep. 2014.
+    [Online] Available: http://dx.doi.org/10.1016/j.comnet.2014.06.001
