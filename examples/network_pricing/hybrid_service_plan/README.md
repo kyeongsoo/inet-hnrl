@@ -19,11 +19,12 @@ performances of proposed schemes.
 
 ## Note
 
-The results from this work has been submitted to IEEE Communications Magazine
-[1].
+The results from this work has been submitted to [1].
 
 
 ## References
-1. Kyeong Soo Kim, "Deficit round-robin-based ISP traffic control scheme
-   enabling excess bandwidth allocation in shared access networks," submitted to
-   IEEE Communications Letters, Mar. 14, 2014.
+1. Kyeong Soo Kim, "On guaranteeing the quality of service of conformant
+   traffic in excess bandwidth allocation for shared access networks,"
+   Proc. of 36th IEEE Sarnoff Symposium, Newark, NJ, USA, pp. 111-116,
+   Sep 20-22, 2015.
+   [Online] Available: http://dx.doi.org/10.1109/SARNOF.2015.7324653
