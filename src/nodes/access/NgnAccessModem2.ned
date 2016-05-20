@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2013 Kyeong Soo (Joseph) Kim
+// Copyright (C) 2016 Kyeong Soo (Joseph) Kim
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -18,42 +18,31 @@
 
 package inet.nodes.access;
 
-import inet.linklayer.ethernet.EtherMAC2withOutputQueueAndMeter;
+import inet.linklayer.ethernet.EtherMAC2withOutputQueue;
 import inet.linklayer.etherswitch.MACRelayUnit;
-import inet.linklayer.vlan.VLANTagger;
+import inet.linklayer.vlan.VLANTagger2;
 
 
 //
-// Abstract model of a next-generation network (NGN) access node
-// (e.g., CMTS, DSLAM, PON OLT) based on a VLAN-capable Ethernet
-// relay unit with external output queueing, VLAN tagger, frame
-// classifier, packet QoS meter, and traffic control modules
-// (i.e., EtherSwitch2WithOutputQueueAndVLAN).
-//
-// <b>Traffic Control</b>
-//
-// To model a switching node at the headend of shared access networks
-// like an optical line termination (OLT) in passive optical networks
-// (PONs) or a cable modem termination system (CMTS) in cable
-// networks, classification of frames (e.g., based on MAC addresses or
-// the PCP field of IEEE 802.1Q Tag) and traffic control per class are
-// required. Currently, traffic control based on the well-known token
-// bucket (TB) algorithm is implemented to control both mean
-// rate/maximum burst and peak rate/MTU through dual TBFs.
+// Abstract model of a next-generation network (NGN) access modem
+// (e.g., cable modem, xDSL modem, TDM-PON ONU) based on a
+// VLAN-capable (including stacked VLANs) Ethernet switch with
+// external output queueing, VLAN tagger, frame classifier, and
+// traffic control modules (i.e., EtherSwitch2WithOutputQueueAndVLAN).
 //
 // <b>VLAN ID Assignment</b>
 //
-// VLAN IDs are automatically assigned based on the number of subscribers.
+// VLAN ID is automatically assigned based on the module index.
 //
-// @see MACRelayUnitNPWithVLAN, VLANTagger, DropTailTBFQueue, VLANClassifier
+// @see MACRelayUnitNPWithVLAN, VLANTagger2, DropTailTBFQueue, VLANClassifier
 //
-module NgnAccessNode2
+module NgnAccessModem2
 {
     parameters:
         @node();
         @labels(node,ethernet-node);
         @display("i=device/switch");
-        int numSubscribers = default(1); // number of subscribers (i.e., ONUs)
+        int pvid = default(10);	// port VLAN ID
         string relayUnitType = default("MACRelayUnitNPWithVLAN"); // type of the MACRelayUnit; currently
 			   				   									  // only MACRelayUnitNPWithVLAN is possible
     gates:
@@ -66,21 +55,22 @@ module NgnAccessNode2
                 lowerLayerIn[sizeof(ethg)];
                 lowerLayerOut[sizeof(ethg)];
         }
-        tagger[sizeof(ethg)]: VLANTagger {
+        tagger[sizeof(ethg)]: VLANTagger2 {
             parameters:
                 @display("p=94,99");
-                tagged = index == 0 ? true : false;
-                dynamicTagging = index == 0 ? false : true;
-                minVid = 10;
-                maxVid = 10+(numSubscribers-1);       
+//                tagged = index == sizeof(ethg)-1 ? false : true;
+                tagged = index == sizeof(ethg)-1 ? true : false;
+//
+//                stackedVlans = true;
+                minVid = pvid;
+                maxVid = pvid;
+//                minVid = index < sizeof(ethg)-1 ? 10+index : pvid;
+//                maxVid = index < sizeof(ethg)-1 ? this.minVid : pvid;
         }
-        mac[sizeof(ethg)]: EtherMAC2withOutputQueueAndMeter {
+        mac[sizeof(ethg)]: EtherMAC2withOutputQueue {
             parameters:
                 @display("p=94,184,row;q=queue");
                 promiscuous = true;
-//                queueType = index == 0 ? "DRRVLANQueue" : "DropTailQueue";
-//                queueType = index == 0 ? "CSFQVLANTokenBucketQueue" : "DropTailQueue";
-                numFlows = index == 0 ? numSubscribers : 0;
         }
     connections:
         for i=0..sizeof(ethg)-1 {

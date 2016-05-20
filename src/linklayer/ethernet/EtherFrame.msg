@@ -17,15 +17,20 @@
 
 
 cplusplus {{
+#include <stack>
 #include "Ethernet.h"
 #include "MACAddress.h"
 #include "Ieee802Ctrl_m.h" // for enums
+#include "VLAN.h"
+typedef std::stack<VLANTag> VLANTagStack;
 }}
 
 
 class noncobject MACAddress;
 
 class noncobject MessageId;
+
+class noncobject VLANTagStack;
 
 enum EtherType;
 
@@ -77,12 +82,29 @@ packet EthernetIIFrame extends EtherFrame
 //
 // Header length: src(6)+dest(6)+802.1Q(=tpid+pcp+cfi+vid; 4)+etherType/length(2) = 18 bytes
 //
+//packet EthernetIIFrameWithVLAN extends EthernetIIFrame
+//{
+//    uint16_t tpid = 0x8100; // tag protocol identifier (16 bits; set to 0x8100)
+//    uint8_t pcp; // priority code point for IEEE 802.1p class of service (3 bits; 0 (lowest) to 7 (highest))
+//    bool dei; // drop eligible indicator (1 bit)
+//    uint16_t vid; // VLAN identifier (12 bits; 0x000 and 0xFFF are reserved, which allows up to 4094 VLANs)
+//}
+
+
+//
+// Ethernet II frame with VLAN (IEEE 802.1Q) tag(s).
+//
+// Header length: src(6)+dest(6)+802.1Q(=tpid+pcp+cfi+vid; 4)*n+etherType/length(2) = 14 + 4*n bytes
+//
 packet EthernetIIFrameWithVLAN extends EthernetIIFrame
 {
-    // int tpic;   // tag protocol identifier (16 bits; set to 0x8100)
-    int pcp;    // priority code point for IEEE 802.1p priority (3 bits; 0 (lowest) to 7 (highest))
-    // int cfi;    // canonical format indicator (1 bit; 0 for Ethernet switches)
-    int vid;    // VLAN identifier (12 bits; 0x000 and 0xFFF are reserved, which allows up to 4094 VLANs.)
+    uint16_t tpid; // tag protocol identifier (16 bits; set to 0x8100 for C-TAG & 0x88A8 for S-TAG)
+    uint8_t pcp; // priority code point for IEEE 802.1p class of service (3 bits; 0 (lowest) to 7 (highest))
+    bool dei; // drop eligible indicator (1 bit)
+    uint16_t vid; // VLAN identifier (12 bits; 0x000 and 0xFFF are reserved, which allows up to 4094 VLANs)
+    
+    // optional; IEEE 802.1Q-in-Q stacked VLANs.
+	VLANTagStack innerTags; // based on std::stack
 }
 
 

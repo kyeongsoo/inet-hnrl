@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2013 Kyeong Soo (Joseph) Kim
+// Copyright (C) 2016 Kyeong Soo (Joseph) Kim
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -20,15 +20,15 @@ package inet.nodes.access;
 
 import inet.linklayer.ethernet.EtherMAC2withOutputQueueAndMeter;
 import inet.linklayer.etherswitch.MACRelayUnit;
-import inet.linklayer.vlan.VLANTagger;
+import inet.linklayer.vlan.VLANTagger2;
 
 
 //
 // Abstract model of a next-generation network (NGN) access node
-// (e.g., CMTS, DSLAM, PON OLT) based on a VLAN-capable Ethernet
-// relay unit with external output queueing, VLAN tagger, frame
-// classifier, packet QoS meter, and traffic control modules
-// (i.e., EtherSwitch2WithOutputQueueAndVLAN).
+// (e.g., CMTS, DSLAM, PON OLT) based on a VLAN-capable (including
+// stacked VLANs) Ethernet relay unit with external output queueing,
+// VLAN tagger, frame classifier, packet QoS meter, and traffic
+// control modules (i.e., EtherSwitch2WithOutputQueueAndVLAN).
 //
 // <b>Traffic Control</b>
 //
@@ -45,15 +45,16 @@ import inet.linklayer.vlan.VLANTagger;
 //
 // VLAN IDs are automatically assigned based on the number of subscribers.
 //
-// @see MACRelayUnitNPWithVLAN, VLANTagger, DropTailTBFQueue, VLANClassifier
+// @see MACRelayUnitNPWithVLAN2, VLANTagger2, DropTailTBFQueue, VLANClassifier
 //
-module NgnAccessNode2
+module NgnAccessNode3
 {
     parameters:
         @node();
         @labels(node,ethernet-node);
         @display("i=device/switch");
-        int numSubscribers = default(1); // number of subscribers (i.e., ONUs)
+        int numSubscribers = default(1); // number of subscribers to a normal traffic control & pricing scheme (i.e., ONUs)
+        int numStackedVlanPorts = default(1); // TODO: to support more than 1 stacked-VLAN ports
         string relayUnitType = default("MACRelayUnitNPWithVLAN"); // type of the MACRelayUnit; currently
 			   				   									  // only MACRelayUnitNPWithVLAN is possible
     gates:
@@ -66,13 +67,14 @@ module NgnAccessNode2
                 lowerLayerIn[sizeof(ethg)];
                 lowerLayerOut[sizeof(ethg)];
         }
-        tagger[sizeof(ethg)]: VLANTagger {
+        tagger[sizeof(ethg)]: VLANTagger2 {
             parameters:
                 @display("p=94,99");
                 tagged = index == 0 ? true : false;
-                dynamicTagging = index == 0 ? false : true;
-                minVid = 10;
-                maxVid = 10+(numSubscribers-1);       
+                dynamicTagging = index == sizeof(ethg)-1 ? true : false; // set for a port connected to the backbone
+                stackedVlans = index == sizeof(ethg)-2 ? true : false; // set for a port connected to OLT_C
+                minVid = index == sizeof(ethg)-2 ? 10+(numSubscribers-1) : 10;
+                maxVid = index == sizeof(ethg)-2 ? 10+(numSubscribers-1) : 10+(numSubscribers-1);
         }
         mac[sizeof(ethg)]: EtherMAC2withOutputQueueAndMeter {
             parameters:
