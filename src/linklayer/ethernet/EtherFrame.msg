@@ -17,15 +17,21 @@
 
 
 cplusplus {{
+#include <stack>
 #include "Ethernet.h"
 #include "MACAddress.h"
 #include "Ieee802Ctrl_m.h" // for enums
+#include "VLAN.h"
+typedef std::stack<VLANTag> VLANTagStack;
+//#include "VLANTagStack.h" // for stacked VLANs (i.e., stacked IEEE 802.1Q headers) in QinQ technique	 
 }}
 
 
 class noncobject MACAddress;
 
 class noncobject MessageId;
+
+class noncobject VLANTagStack;
 
 enum EtherType;
 
@@ -83,6 +89,17 @@ packet EthernetIIFrameWithVLAN extends EthernetIIFrame
     int pcp;    // priority code point for IEEE 802.1p priority (3 bits; 0 (lowest) to 7 (highest))
     // int cfi;    // canonical format indicator (1 bit; 0 for Ethernet switches)
     int vid;    // VLAN identifier (12 bits; 0x000 and 0xFFF are reserved, which allows up to 4094 VLANs.)
+}
+
+
+//
+// Ethernet II frame with IEEE 802.1Q-in-Q VLAN tag termination (i.e., stacked VLANs).
+//
+// Header length: src(6)+dest(6)+802.1Q(=tpid+pcp+cfi+vid; 4)*n+etherType/length(2) = 14 + 4*n bytes
+//
+packet EthernetIIFrameWithVLANs extends EthernetIIFrame
+{
+	VLANTagStack vlanTags;	// based on std::stack
 }
 
 

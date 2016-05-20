@@ -16,7 +16,21 @@
 #ifndef __INET_VLAN_H
 #define __INET_VLAN_H
 
-typedef unsigned int VID;   ///< VLAN ID type
+// 32-bit fields of IEEE 802.1Q header
+//typedef unsigned int TPID;  ///< tag protocol identifier (16 bits)
+//// the following are subfields of 16-bit tag control information (TCI):
+//typedef unsigned short PCP; ///< priority code point (3 bits)
+//typedef unsigned short DEI; ///< drop eligible indicator (1 bit)
+typedef unsigned int VID;   ///< VLAN identifier type
+typedef struct
+{
+    unsigned int tpid;  ///< tag protocol identifier (16 bits)
+
+    // the following are subfields of 16-bit tag control information (TCI):
+    unsigned short pcp; ///< priority code point (3 bits)
+    unsigned short dei; ///< drop eligible indicator (1 bit)
+    VID vid;    ///< VLAN identifier
+} VLANTag;
 
 //#define ETHER_VLAN_TAG_LENGTH   (4) // tpid(2)+tci(2)
 //const int   ETHER_1Q_TAG_LENGTH = 4;    // VID(12bit)+DEI(1bit)+PCP(3bit)+TPID(2B)
