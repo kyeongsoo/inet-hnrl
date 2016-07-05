@@ -21,15 +21,23 @@
 //// the following are subfields of 16-bit tag control information (TCI):
 //typedef unsigned short PCP; ///< priority code point (3 bits)
 //typedef unsigned short DEI; ///< drop eligible indicator (1 bit)
-typedef unsigned int VID;   ///< VLAN identifier type
-typedef struct
-{
-    unsigned int tpid;  ///< tag protocol identifier (16 bits)
 
-    // the following are subfields of 16-bit tag control information (TCI):
-    unsigned short pcp; ///< priority code point (3 bits)
-    unsigned short dei; ///< drop eligible indicator (1 bit)
-    VID vid;    ///< VLAN identifier
+typedef uint16_t VID; ///< VLAN identifier type
+
+//typedef struct
+//{
+//    unsigned short pcp; ///< priority code point (3 bits)
+//    bool dei; ///< drop eligible indicator (1 bit)
+//    VID vid;    ///< VLAN identifier (12 bits)
+//} TCI; ///< tag control information (TCI) type
+
+typedef struct {
+    uint16_t tpid = 0x8100; // tag protocol identifier (16 bits; set to 0x8100)
+    uint8_t pcp; // priority code point for IEEE 802.1p class of service (3 bits; 0 (lowest) to 7 (highest))
+    bool dei; // drop eligible indicator (1 bit)
+    uint16_t vid; // VLAN identifier (12 bits; 0x000 and 0xFFF are reserved, which allows up to 4094 VLANs)
+//    unsigned int tpid; ///< tag protocol identifier (16 bits)
+//    TCI tci; ///< 16-bit tag control information (TCI)
 } VLANTag;
 
 //#define ETHER_VLAN_TAG_LENGTH   (4) // tpid(2)+tci(2)
