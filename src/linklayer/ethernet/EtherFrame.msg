@@ -23,7 +23,6 @@ cplusplus {{
 #include "Ieee802Ctrl_m.h" // for enums
 #include "VLAN.h"
 typedef std::stack<VLANTag> VLANTagStack;
-//#include "VLANTagStack.h" // for stacked VLANs (i.e., stacked IEEE 802.1Q headers) in QinQ technique	 
 }}
 
 

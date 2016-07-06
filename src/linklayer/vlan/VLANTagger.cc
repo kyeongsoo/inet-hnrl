@@ -97,16 +97,15 @@ void VLANTagger::handleMessage(cMessage *msg)
     }
     
     if (msg->getArrivalGateId() == findGate("macg$i"))
-    {
-        // ingress rule checking
+    {   // ingress rule checking
         if (tagged)
         {
             if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
             {
                 VID vid = dynamic_cast<EthernetIIFrameWithVLAN *>(msg)->getVid();
-                if ((vid == 0) || (vid == 4095))
+                if ((vid == 0x000) || (vid == 0xFFF))
                 {
-                    EV << "VID of 0 (null) or 4095 (reserved) is not allowed.\n";
+                    EV << "VID of 0x000 (null) or 0xFFF (reserved) is not allowed.\n";
                     delete msg;
                 }
                 else
@@ -151,8 +150,7 @@ void VLANTagger::handleMessage(cMessage *msg)
         }
     }
     else if (msg->getArrivalGateId() == findGate("relayg$i"))
-    {
-        // egress rule checking
+    {   // egress rule checking
         if (tagged)
         {
             // processTaggedFrame(msg);
@@ -205,9 +203,9 @@ void VLANTagger::TagFrame(EthernetIIFrame *frame, VLANFrameVector& vlanFrames)
     vlanFrame->setSrc(frame->getSrc());
     vlanFrame->setEtherType(frame->getEtherType());
     vlanFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_VLAN_TAG_LENGTH);
-    cPacket * temp = frame->decapsulate();
-    if (temp != NULL)
-        vlanFrame->encapsulate(temp);
+    cPacket *pkt = frame->decapsulate();
+    if (pkt != NULL)
+        vlanFrame->encapsulate(pkt);
     delete frame;
 
     VIDVector::iterator it;
@@ -222,5 +220,15 @@ void VLANTagger::TagFrame(EthernetIIFrame *frame, VLANFrameVector& vlanFrames)
 
 EthernetIIFrame *VLANTagger::UntagFrame(EthernetIIFrameWithVLAN *vlanFrame)
 {
-    return check_and_cast<EthernetIIFrame *>(vlanFrame);
+//    return check_and_cast<EthernetIIFrame *>(vlanFrame);
+    EthernetIIFrame *frame = new EthernetIIFrame;
+    frame->setDest(vlanFrame->getDest());
+    frame->setSrc(vlanFrame->getSrc());
+    frame->setEtherType(vlanFrame->getEtherType());
+    frame->setByteLength(ETHER_MAC_FRAME_BYTES);
+    cPacket *pkt = vlanFrame->decapsulate();
+    if (pkt != NULL)
+        frame->encapsulate(pkt);
+    delete vlanFrame;
+    return frame;
 }

@@ -58,7 +58,7 @@ class VLANTagger : public cSimpleModule
         typedef std::vector<EthernetIIFrameWithVLAN *> VLANFrameVector;
 
         // create VLAN-tagged Ethernet frame(s) for a given Ethernet frame
-        virtual void TagFrame(EthernetIIFrame *msg, VLANFrameVector& vlanFrames);
+        virtual void TagFrame(EthernetIIFrame *frame, VLANFrameVector& vlanFrames);
 
         // extract VLAN tag from an Ethernet frame
         virtual EthernetIIFrame *UntagFrame(EthernetIIFrameWithVLAN *msg);
