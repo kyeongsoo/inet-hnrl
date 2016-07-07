@@ -26,25 +26,12 @@
 class INET_API VLANTagger2 : public VLANTagger
 {
     protected:
-//        MACRelayUnitNPWithVLAN *relay;    ///< relay module pointer to get access to the VLAN address table for dynamic VLAN tagging
-//        bool tagged;    ///< port type
-//        bool dynamicTagging;    ///< (experimental) dynamic tagging for untagged port based on source & destination MAC addresses of incoming frames
-//        /* bool verbose; */
-//        int minVid; ///< minimum of the range of allowed VID values
-//        int maxVid; ///< maximum of the range of allowed VID values
-//        VID pvid;   ///< Port VLAN Identifier (PVID) for untagged port
-//
-//        typedef std::vector<VID> VIDVector;
-//        VIDVector vidSet;   ///< set of VIDs for tagged port
         bool stackedVlans; ///< (experimental) capable of stacking of the 2nd VLAN tag (S-TAG) in addition to the 1st one (C-TAG)
 
     public:
 //        VLANTagger2();
 //        ~VLANTagger2();
-        bool isTagged() const {return tagged;}
-        bool isDynamicTagging() const {return dynamicTagging;}
-        VID getPvid() const {return pvid;}
-        VIDVector getVidSet() const {return vidSet;}
+        bool isStacktedVlans() const {return stackedVlans;}
 
     protected:
         virtual void initialize();
@@ -52,11 +39,11 @@ class INET_API VLANTagger2 : public VLANTagger
 
         typedef std::vector<EthernetIIFrameWithVLAN *> VLANFrameVector;
 
-        // create VLAN-tagged Ethernet frame(s) for a given Ethernet frame
-        virtual void TagFrame(EthernetIIFrame *frame, VLANFrameVector& vlanFrames);
+        // create stacked-VLAN Ethernet frame(s) for a given VLAN-tagged Ethernet frame
+        virtual void tagPushFrame(EthernetIIFrameWithVLAN *vlanFrame, VLANFrameVector& vlanFrames);
 
         // extract VLAN tag from an Ethernet frame
-        virtual EthernetIIFrame *UntagFrame(EthernetIIFrameWithVLAN *msg);
+        virtual EthernetIIFrame *untagFrame(EthernetIIFrameWithVLAN *msg);
 };
 
 #endif // __INET_VLAN_TAGGER2_H

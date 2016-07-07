@@ -32,7 +32,7 @@ typedef uint16_t VID; ///< VLAN identifier type
 //} TCI; ///< tag control information (TCI) type
 
 typedef struct {
-    uint16_t tpid = 0x8100; // tag protocol identifier (16 bits; set to 0x8100)
+    uint16_t tpid; // tag protocol identifier (16 bits)
     uint8_t pcp; // priority code point for IEEE 802.1p class of service (3 bits; 0 (lowest) to 7 (highest))
     bool dei; // drop eligible indicator (1 bit)
     uint16_t vid; // VLAN identifier (12 bits; 0x000 and 0xFFF are reserved, which allows up to 4094 VLANs)

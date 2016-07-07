@@ -98,11 +98,31 @@ void VLANTagger2::handleMessage(cMessage *msg)
         }
         else
         {
-            if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
-            {
+            if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) == NULL)
+            {   // Ethernet frame without VLAN tag
+                VLANFrameVector vlanFrames;
+                tagFrame(check_and_cast<EthernetIIFrame *>(msg), vlanFrames);
+                VLANFrameVector::iterator it;
+                for (it = vlanFrames.begin(); it < vlanFrames.end(); it++)
+                {
+                    send(*it, "relayg$o");
+                }
+            }
+            else
+            {   // Ethernet frame with VLAN tag
                 if (stackedVlans)
                 {
-                    if (((EthernetIIFrameWithVLAN *) msg)->getTpid() == 0x88A8)
+                    if (((EthernetIIFrameWithVLAN *) msg)->getTpid() == 0x8100)
+                    {
+                        VLANFrameVector vlanFrames;
+                        tagPushFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg), vlanFrames);
+                        VLANFrameVector::iterator it;
+                        for (it = vlanFrames.begin(); it < vlanFrames.end(); it++)
+                        {
+                            send(*it, "relayg$o");
+                        }
+                    }
+                    else
                     {
                         EV << "Untagged port with 'stackedVlans' enabled cannot receive a frame with stacked VLAN tags. Drop.\n";
                         delete msg;
@@ -113,64 +133,8 @@ void VLANTagger2::handleMessage(cMessage *msg)
                     EV << "Untagged port cannot receive a frame with a VLAN tag. Drop.\n";
                     delete msg;
                 }
-                return;
-            }
-
-            VLANFrameVector vlanFrames;
-            TagFrame(check_and_cast<EthernetIIFrame *>(msg), vlanFrames);
-            VLANFrameVector::iterator it;
-            for (it = vlanFrames.begin(); it < vlanFrames.end(); it++)
-            {
-                send(*it, "relayg$o");
             }
         }
-//            if (stackedVlans)
-//            {
-//                if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
-//                {
-//                    if (((EthernetIIFrameWithVLAN *) msg)->getTpid() == 0x8100)
-//                    {   // standard IEEE 802.1Q tagged frame without stacked tags
-////                        MACAddress address = ((EthernetIIFrame *) msg)->getDest();
-//                        VLANFrameVector vlanFrames;
-//                        TagFrame(msg, vlanFrames);
-//                        VLANFrameVector::iterator it;
-//                        for (it = vlanFrames.begin(); it < vlanFrames.end(); it++)
-//                        {
-//                            send(*it, "relayg$o");
-//                        }
-//                    }
-//                    else
-//                    {
-//                        EV << "Untagged port with 'stackedVlans' enabled cannot receive a frame with stacked VLAN tags. Drop.\n";
-//                        delete msg;
-//                    }
-//                }
-//                else
-//                {
-//                    EV << "Untagged port with 'stackedVlans' enabled cannot receive a frame with stacked VLAN tags. Drop.\n";
-//                    delete msg;
-//                }
-//            }
-//            else
-//            {
-//                if (dynamic_cast<EthernetIIFrame *>(msg) != NULL)
-//                {
-////                    MACAddress address = ((EthernetIIFrame *) msg)->getDest();
-//                    VLANFrameVector vlanFrames;
-//                    TagFrame(msg, vlanFrames);
-//                    VLANFrameVector::iterator it;
-//                    for (it = vlanFrames.begin(); it < vlanFrames.end(); it++)
-//                    {
-//                        send(*it, "relayg$o");
-//                    }
-//                }
-//                else
-//                {
-//                    EV << "Untagged port cannot receive a frame with a VLAN tag. Drop.\n";
-//                    delete msg;
-//                }
-//            }
-//        }
     }
     else if (msg->getArrivalGateId() == findGate("relayg$i"))
     {   // egress rule checking
@@ -183,7 +147,7 @@ void VLANTagger2::handleMessage(cMessage *msg)
         {
             if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
             {
-                UntagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
+                untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
                 // processTaggedFrame(msg);
                 send(msg, "macg$o");
             }
@@ -200,13 +164,14 @@ void VLANTagger2::handleMessage(cMessage *msg)
     }
 }
 
-void VLANTagger2::TagFrame(EthernetIIFrame *frame, VLANFrameVector& vlanFrames)
+
+void VLANTagger2::tagPushFrame(EthernetIIFrameWithVLAN *frame, VLANFrameVector& vlanFrames)
 {
     VIDVector vids;
 
     if (dynamicTagging == true)
     {   // dynamic tagging based on the VLAN address table
-    	int vid = relay->getVIDForMACAddress(frame->getDest());
+        int vid = relay->getVIDForMACAddress(frame->getDest());
         if (vid < 0)
         {   // either there is no matching VID for the MAC address or the frame is for broadcasting
             vids = vidSet;
@@ -221,11 +186,11 @@ void VLANTagger2::TagFrame(EthernetIIFrame *frame, VLANFrameVector& vlanFrames)
         vids.push_back(pvid);
     }
 
-    EthernetIIFrameWithVLAN *vlanFrame = new EthernetIIFrameWithVLAN;
-    vlanFrame->setDest(frame->getDest());
-    vlanFrame->setSrc(frame->getSrc());
-    vlanFrame->setEtherType(frame->getEtherType());
-    vlanFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_VLAN_TAG_LENGTH);
+    EthernetIIFrameWithVLAN *vlanFrame = frame->dup();
+    VLANTag vlanTag = {frame->getTpid(), frame->getPcp(), frame->getDei(), frame->getVid()};
+    vlanFrame->getInnerTags().push(vlanTag);
+    vlanFrame->setTpid(0x88A8); // for S-TAG
+    vlanFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_VLAN_TAG_LENGTH + ETHER_VLAN_TAG_LENGTH); // double tags
     cPacket *pkt = frame->decapsulate();
     if (pkt != NULL)
         vlanFrame->encapsulate(pkt);
@@ -241,7 +206,8 @@ void VLANTagger2::TagFrame(EthernetIIFrame *frame, VLANFrameVector& vlanFrames)
     delete vlanFrame;
 }
 
-EthernetIIFrame *VLANTagger2::UntagFrame(EthernetIIFrameWithVLAN *vlanFrame)
+
+EthernetIIFrame *VLANTagger2::untagFrame(EthernetIIFrameWithVLAN *vlanFrame)
 {
     uint16_t tpid = vlanFrame->getTpid();
 
