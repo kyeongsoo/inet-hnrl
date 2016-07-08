@@ -147,9 +147,10 @@ void VLANTagger2::handleMessage(cMessage *msg)
         {
             if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
             {
-                untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
-                // processTaggedFrame(msg);
-                send(msg, "macg$o");
+//                untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
+//                // processTaggedFrame(msg);
+//                send(msg, "macg$o");
+                send(untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg)), "macg$o");
             }
             else
             {
