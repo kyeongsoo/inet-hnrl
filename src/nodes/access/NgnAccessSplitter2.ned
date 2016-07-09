@@ -57,9 +57,10 @@ module NgnAccessSplitter2
         tagger[sizeof(ethg)]: VLANTagger2 {
             parameters:
                 @display("p=94,99");
-                tagged = true;
+                tagged = index == sizeof(ethg)-2 ? false : true;
+                stackedVlans = index == sizeof(ethg)-2 ? true : false;
                 minVid = index < sizeof(ethg)-1 ? 10+index : 10;
-                maxVid = index < sizeof(ethg)-1 ? this.minVid : 10+(sizeof(ethg)-2);       
+                maxVid = index < sizeof(ethg)-1 ? this.minVid : 10+(sizeof(ethg)-2); 
         }
         mac[sizeof(ethg)]: EtherMAC2withOutputQueue {
             parameters:

@@ -22,11 +22,11 @@ package inet.examples.network_pricing.hybrid_service_plan;
 import inet.examples.ethernet.lans.ethernetline;
 import inet.networklayer.autorouting.FlatNetworkConfigurator;
 import inet.nodes.access.NgnAccessModem;
-import inet.nodes.access.NgnAccessModem2;
+//import inet.nodes.access.NgnAccessModem2;
 import inet.nodes.access.NgnAccessNode2;
 import inet.nodes.access.NgnAccessNode3;
 import inet.nodes.access.NgnAccessSplitter;
-//import inet.nodes.access.NgnAccessSplitter2;
+import inet.nodes.access.NgnAccessSplitter2;
 import inet.nodes.inet.RouterWithEthernetInterface2;
 import inet.nodes.inet.StandardHost3WithEthernetInterface2;
 import inet.nodes.inet.StandardHost3WithEthernetInterface2WithDLPerformanceMeter;
@@ -125,7 +125,7 @@ network NgnAccessWithStackedVlans
         double backbone_delay @unit(s) = default(4.7ms);	// default delay of 4.7 ms gives total RTT of 10 ms including delays in access
         double backbone_delay1 @unit(s) = default(2.0ms);	// together with backbone_delay2 (i.e. 4.7ms), it gives total RTT of 10 ms including delays in access
         double backbone_delay2 @unit(s) = default(2.7ms);
-        @display("bgb=833,357");
+        @display("bgb=864,357");
     submodules:
         configurator: FlatNetworkConfigurator {
             parameters:
@@ -133,37 +133,37 @@ network NgnAccessWithStackedVlans
         }
         server: StandardServerWithEthernetInterface2 {
             parameters:
-                @display("p=741,116;i=device/server_l");
+                @display("p=778,115;i=device/server_l");
             gates:
                 ethg[1];
         }
         server2: StandardServerWithEthernetInterface2 {
             parameters:
-                @display("p=741,246;i=device/server_l");
+                @display("p=778,245;i=device/server_l");
             gates:
                 ethg[1];
         }
-        olt: NgnAccessNode2 {
+        olt: NgnAccessNode3 {
             parameters:
-                @display("p=478,116");
+                @display("p=515,115");
             gates:
                 ethg[3];
         }
-        olt_c: NgnAccessNode3 {
+        olt_c: NgnAccessNode2 {
             parameters:
-                @display("p=478,245");
+                @display("p=515,244");
             gates:
                 ethg[2];
         }
-        accessSwitch: NgnAccessSplitter {
+        accessSwitch: NgnAccessSplitter2 {
             parameters:
-                @display("p=359,116");
+                @display("p=396,115");
             gates:
                 ethg[N+2];
         }
         onu[N]: NgnAccessModem {
             parameters:
-                @display("p=211,116");
+                @display("p=248,115");
                 pvid = index+10;
             gates:
                 ethg[n+1];
@@ -175,10 +175,9 @@ network NgnAccessWithStackedVlans
             gates:
                 ethg[n+1];
         }
-        onu_c: NgnAccessModem2 {
+        accessSwitch_c: NgnAccessSplitter {
             parameters:
-                @display("p=211,245");
-                pvid = index+10;
+                @display("p=248,244");
             gates:
                 ethg[Nh+1];
         }
@@ -195,11 +194,11 @@ network NgnAccessWithStackedVlans
                 ethg[1];
         }
         router: RouterWithEthernetInterface2 {
-            @display("p=597,117");
+            @display("p=634,116");
         }
 
         router2: RouterWithEthernetInterface2 {
-            @display("p=597,246");
+            @display("p=634,245");
         }
     connections:
         for i=0..N-1, for j=0..n-1 {
@@ -212,9 +211,9 @@ network NgnAccessWithStackedVlans
             onu[i].ethg[n] <--> {  delay = distribution_delay; datarate = distribution_rate; } <--> accessSwitch.ethg[i];
         }
         for i=0..Nh-1 {
-            onu2[i].ethg[n] <--> {  delay = distribution_delay; datarate = distribution_rate; } <--> onu_c.ethg[i];
+            onu2[i].ethg[n] <--> {  delay = distribution_delay; datarate = distribution_rate; } <--> accessSwitch_c.ethg[i];
         }
-        onu_c.ethg[Nh] <--> {  datarate = distribution_rate; } <--> accessSwitch.ethg[N]; // no delay
+        accessSwitch_c.ethg[Nh] <--> {  datarate = distribution_rate; } <--> accessSwitch.ethg[N]; // no delay
         accessSwitch.ethg[N+1] <--> {  delay = distribution_delay; datarate = distribution_rate; } <--> olt.ethg[0];
         olt.ethg[1] <--> {  delay = backbone_delay1; datarate = backbone_rate; } <--> router.ethg++;
         olt.ethg[2] <--> {  datarate = backbone_rate; } <--> olt_c.ethg[0]; // no delay
