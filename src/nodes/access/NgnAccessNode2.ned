@@ -53,7 +53,7 @@ module NgnAccessNode2
         @node();
         @labels(node,ethernet-node);
         @display("i=device/switch");
-        int numSubscribers = default(1);	// number of subscribers (e.g., ONUs)
+        int numSubscribers = default(1); // number of subscribers (i.e., ONUs)
         string relayUnitType = default("MACRelayUnitNPWithVLAN"); // type of the MACRelayUnit; currently
 			   				   									  // only MACRelayUnitNPWithVLAN is possible
     gates:

@@ -22,7 +22,7 @@ package inet.examples.network_pricing.hybrid_service_plan;
 import inet.examples.ethernet.lans.ethernetline;
 import inet.networklayer.autorouting.FlatNetworkConfigurator;
 import inet.nodes.access.NgnAccessModem;
-//import inet.nodes.access.NgnAccessModem2;
+import inet.nodes.access.NgnAccessModem2;
 import inet.nodes.access.NgnAccessNode2;
 import inet.nodes.access.NgnAccessNode3;
 import inet.nodes.access.NgnAccessSplitter;
@@ -161,14 +161,14 @@ network NgnAccessWithStackedVlans
             gates:
                 ethg[N+2];
         }
-        onu[N]: NgnAccessModem {
+        onu[N]: NgnAccessModem2 {
             parameters:
                 @display("p=248,115");
                 pvid = index+10;
             gates:
                 ethg[n+1];
         }
-        onu2[Nh]: NgnAccessModem {
+        onu2[Nh]: NgnAccessModem2 {
             parameters:
                 @display("p=124,245");
                 pvid = index+10;
@@ -215,8 +215,8 @@ network NgnAccessWithStackedVlans
         }
         accessSwitch_c.ethg[Nh] <--> {  datarate = distribution_rate; } <--> accessSwitch.ethg[N]; // no delay
         accessSwitch.ethg[N+1] <--> {  delay = distribution_delay; datarate = distribution_rate; } <--> olt.ethg[0];
-        olt.ethg[1] <--> {  delay = backbone_delay1; datarate = backbone_rate; } <--> router.ethg++;
-        olt.ethg[2] <--> {  datarate = backbone_rate; } <--> olt_c.ethg[0]; // no delay
+        olt.ethg[1] <--> {  datarate = backbone_rate; } <--> olt_c.ethg[0]; // no delay
+        olt.ethg[2] <--> {  delay = backbone_delay1; datarate = backbone_rate; } <--> router.ethg++;
         olt_c.ethg[1] <--> {  delay = backbone_delay1; datarate = backbone_rate; } <--> router2.ethg++;
         router.ethg++ <--> {  delay = backbone_delay2; datarate = backbone_rate; } <--> server.ethg++;
         router2.ethg++ <--> {  delay = backbone_delay2; datarate = backbone_rate; } <--> server2.ethg++;

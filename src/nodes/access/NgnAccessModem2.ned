@@ -58,13 +58,14 @@ module NgnAccessModem2
         tagger[sizeof(ethg)]: VLANTagger2 {
             parameters:
                 @display("p=94,99");
-                tagged = index == sizeof(ethg)-1 ? false : true;
-                dynamicTagging = index == sizeof(ethg)-1 ? true : false;
-                stackedVlans = true;
-//                minVid = pvid;
-//                maxVid = pvid;
-                minVid = index < sizeof(ethg)-1 ? 10+index : pvid;
-                maxVid = index < sizeof(ethg)-1 ? this.minVid : pvid;
+//                tagged = index == sizeof(ethg)-1 ? false : true;
+                tagged = index == sizeof(ethg)-1 ? true : false;
+//
+//                stackedVlans = true;
+                minVid = pvid;
+                maxVid = pvid;
+//                minVid = index < sizeof(ethg)-1 ? 10+index : pvid;
+//                maxVid = index < sizeof(ethg)-1 ? this.minVid : pvid;
         }
         mac[sizeof(ethg)]: EtherMAC2withOutputQueue {
             parameters:

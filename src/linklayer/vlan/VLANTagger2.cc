@@ -150,7 +150,10 @@ void VLANTagger2::handleMessage(cMessage *msg)
 //                untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
 //                // processTaggedFrame(msg);
 //                send(msg, "macg$o");
-                send(untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg)), "macg$o");
+                EthernetIIFrame *frame = untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
+                if (frame != NULL)
+//                    send(untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg)), "macg$o");
+                    send(frame, "macg$o");
             }
             else
             {
@@ -191,10 +194,10 @@ void VLANTagger2::tagPushFrame(EthernetIIFrameWithVLAN *frame, VLANFrameVector& 
     VLANTag vlanTag = {frame->getTpid(), frame->getPcp(), frame->getDei(), frame->getVid()};
     vlanFrame->getInnerTags().push(vlanTag);
     vlanFrame->setTpid(0x88A8); // for S-TAG
-    vlanFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_VLAN_TAG_LENGTH + ETHER_VLAN_TAG_LENGTH); // double tags
-    cPacket *pkt = frame->decapsulate();
-    if (pkt != NULL)
-        vlanFrame->encapsulate(pkt);
+    vlanFrame->setByteLength(vlanFrame->getByteLength() + ETHER_VLAN_TAG_LENGTH); // double tags
+//    cPacket *pkt = frame->decapsulate();
+//    if (pkt != NULL)
+//        vlanFrame->encapsulate(pkt);
     delete frame;
 
     VIDVector::iterator it;
@@ -212,29 +215,46 @@ EthernetIIFrame *VLANTagger2::untagFrame(EthernetIIFrameWithVLAN *vlanFrame)
 {
     uint16_t tpid = vlanFrame->getTpid();
 
-    if (!stackedVlans && (tpid == 0x8100))
-    {   // standard IEEE 802.1Q tagged frame without stacked tag
-        EthernetIIFrame *frame = new EthernetIIFrame;
-        frame->setDest(vlanFrame->getDest());
-        frame->setSrc(vlanFrame->getSrc());
-        frame->setEtherType(vlanFrame->getEtherType());
-        frame->setByteLength(ETHER_MAC_FRAME_BYTES);
-        cPacket *pkt = vlanFrame->decapsulate();
-        if (pkt != NULL)
-            frame->encapsulate(pkt);
-        delete vlanFrame;
-        return frame;
+    if (!stackedVlans)
+    {
+        if (tpid == 0x8100)
+        {   // standard IEEE 802.1Q tagged frame without stacked tag
+            EthernetIIFrame *frame = new EthernetIIFrame;
+            frame->setDest(vlanFrame->getDest());
+            frame->setSrc(vlanFrame->getSrc());
+            frame->setEtherType(vlanFrame->getEtherType());
+            frame->setByteLength(ETHER_MAC_FRAME_BYTES);
+            cPacket *pkt = vlanFrame->decapsulate();
+            if (pkt != NULL)
+                frame->encapsulate(pkt);
+            delete vlanFrame;
+            return frame;
+        }
+        if (tpid == 0x88A8)
+        {   // stacked-tag frame for a port without stacked-VLAN support as a result of broadcasting
+            delete vlanFrame; // ignore and just delete it
+            return NULL;
+        }
     }
 
-    if (stackedVlans && (tpid == 0x88A8))
-    {   // stacked tag(s)
-        VLANTag vtag = vlanFrame->getInnerTags().top();
-        vlanFrame->getInnerTags().pop();
-        vlanFrame->setTpid(0x8100);
-        vlanFrame->setVid(vtag.vid);
-        return check_and_cast<EthernetIIFrame *>(vlanFrame);
+    if (stackedVlans)
+    {
+        if (tpid == 0x88A8)
+        {   // stacked tag(s)
+            VLANTag vtag = vlanFrame->getInnerTags().top();
+            vlanFrame->getInnerTags().pop();
+            vlanFrame->setTpid(0x8100);
+            vlanFrame->setVid(vtag.vid);
+            return check_and_cast<EthernetIIFrame *>(vlanFrame);
+        }
+        if (tpid == 0x8100)
+        {   // single-tagged frame for a stacked-VLAN port as a result of broadcasting
+            delete vlanFrame; // ignore and just delete it
+            return NULL;
+        }
     }
 
+    EV << getFullPath() << endl;
     error("Unknown TPID value");
     return NULL; // to suppress compiler warning messages
 }

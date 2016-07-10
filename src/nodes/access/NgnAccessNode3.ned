@@ -53,7 +53,8 @@ module NgnAccessNode3
         @node();
         @labels(node,ethernet-node);
         @display("i=device/switch");
-        int numSubscribers = default(1);	// number of subscribers to a hybrid traffic control & pricing scheme (i.e., ONU_Cs)
+        int numSubscribers = default(1); // number of subscribers to a normal traffic control & pricing scheme (i.e., ONUs)
+        int numStackedVlanPorts = default(1); // TODO: to support more than 1 stacked-VLAN ports
         string relayUnitType = default("MACRelayUnitNPWithVLAN"); // type of the MACRelayUnit; currently
 			   				   									  // only MACRelayUnitNPWithVLAN is possible
     gates:
@@ -70,9 +71,10 @@ module NgnAccessNode3
             parameters:
                 @display("p=94,99");
                 tagged = index == 0 ? true : false;
-                dynamicTagging = index == 0 ? false : true;
-                minVid = 10;
-                maxVid = 10+(numSubscribers-1);       
+                dynamicTagging = index == sizeof(ethg)-1 ? true : false; // set for a port connected to the backbone
+                stackedVlans = index == sizeof(ethg)-2 ? true : false; // set for a port connected to OLT_C
+                minVid = index == sizeof(ethg)-2 ? 10+(numSubscribers-1) : 10;
+                maxVid = index == sizeof(ethg)-2 ? 10+(numSubscribers-1) : 10+(numSubscribers-1);
         }
         mac[sizeof(ethg)]: EtherMAC2withOutputQueueAndMeter {
             parameters:
