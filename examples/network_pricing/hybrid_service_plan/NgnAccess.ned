@@ -125,80 +125,80 @@ network NgnAccessWithStackedVlans
         double backbone_delay @unit(s) = default(4.7ms);	// default delay of 4.7 ms gives total RTT of 10 ms including delays in access
         double backbone_delay1 @unit(s) = default(2.0ms);	// together with backbone_delay2 (i.e. 4.7ms), it gives total RTT of 10 ms including delays in access
         double backbone_delay2 @unit(s) = default(2.7ms);
-        @display("bgb=864,357");
+        @display("bgb=834,303");
     submodules:
         configurator: FlatNetworkConfigurator {
             parameters:
-                @display("p=52,42");
+                @display("p=50,31");
         }
         server: StandardServerWithEthernetInterface2 {
             parameters:
-                @display("p=778,115;i=device/server_l");
+                @display("p=776,104;i=device/server_l");
             gates:
                 ethg[1];
         }
         server2: StandardServerWithEthernetInterface2 {
             parameters:
-                @display("p=778,245;i=device/server_l");
+                @display("p=776,234;i=device/server_l");
             gates:
                 ethg[1];
         }
         olt: NgnAccessNode3 {
             parameters:
-                @display("p=515,115");
+                @display("p=513,104");
             gates:
                 ethg[3];
         }
         olt_c: NgnAccessNode2 {
             parameters:
-                @display("p=515,244");
+                @display("p=513,233");
             gates:
                 ethg[2];
         }
         accessSwitch: NgnAccessSplitter2 {
             parameters:
-                @display("p=396,115");
+                @display("p=394,104");
             gates:
                 ethg[N+2];
         }
         onu[N]: NgnAccessModem2 {
             parameters:
-                @display("p=248,115");
+                @display("p=246,104");
                 pvid = index+10;
             gates:
                 ethg[n+1];
         }
         onu2[Nh]: NgnAccessModem2 {
             parameters:
-                @display("p=124,245");
+                @display("p=123,234");
                 pvid = index+10;
             gates:
                 ethg[n+1];
         }
         accessSwitch_c: NgnAccessSplitter {
             parameters:
-                @display("p=248,244");
+                @display("p=246,234");
             gates:
                 ethg[Nh+1];
         }
         host[N*n]: StandardHost3WithEthernetInterface2WithDLPerformanceMeter {
             parameters:
-                @display("i=device/laptop;p=54,116");
+                @display("i=device/laptop;p=52,105");
             gates:
                 ethg[1];
         }
         host2[Nh*n]: StandardHost3WithEthernetInterface2WithDLPerformanceMeter {
             parameters:
-                @display("i=device/laptop;p=52,246");
+                @display("i=device/laptop;p=50,235");
             gates:
                 ethg[1];
         }
         router: RouterWithEthernetInterface2 {
-            @display("p=634,116");
+            @display("p=632,105");
         }
 
         router2: RouterWithEthernetInterface2 {
-            @display("p=634,245");
+            @display("p=632,234");
         }
     connections:
         for i=0..N-1, for j=0..n-1 {
