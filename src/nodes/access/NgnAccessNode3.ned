@@ -30,7 +30,7 @@ import inet.linklayer.vlan.VLANTagger2;
 // VLAN tagger, frame classifier, packet QoS meter, and traffic
 // control modules (i.e., EtherSwitch2WithOutputQueueAndVLAN).
 //
-// <b>Traffic Control</b>
+// <b> Traffic Control</b>
 //
 // To model a switching node at the headend of shared access networks
 // like an optical line termination (OLT) in passive optical networks
@@ -40,6 +40,18 @@ import inet.linklayer.vlan.VLANTagger2;
 // required. Currently, traffic control based on the well-known token
 // bucket (TB) algorithm is implemented to control both mean
 // rate/maximum burst and peak rate/MTU through dual TBFs.
+//
+// A major new feature introduced by this module, compared to NgnAccessNode2
+// module, is the hybrid traffic control, i.e., a hierarchical traffic control,
+// which can be provided together with other NGN accesss nodes: When an
+// NgnAccessNode3 node is connected to another NgnAccessNode2 node,
+// the NgnAccessNode2 node provides a first-level traffic control and the
+// resulting stream goes through a second-level traffic control at the
+// NgnAccessNode3 node. Note that the flow streams from the NgnAccessNode2
+// are assigned a S-VLAN tag at an ingress of the NgnAccessNode3 for a group
+// traffic control. Also, note that the NNgnAccessNode2 can send Ethernet
+// PAUSE frame back to the NgnAccessNode2 as a part of the hybrid traffic
+// control implemented over the two separate nodes.
 //
 // <b>VLAN ID Assignment</b>
 //

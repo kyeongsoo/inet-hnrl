@@ -17,8 +17,8 @@
 //
 
 
-#ifndef __INET_DROPTAILVLANTBFQUEUE_H
-#define __INET_DROPTAILVLANTBFQUEUE_H
+#ifndef __INET_DROPTAILVLANTBFQUEUE2_H
+#define __INET_DROPTAILVLANTBFQUEUE2_H
 
 #include <omnetpp.h>
 #include <algorithm>
