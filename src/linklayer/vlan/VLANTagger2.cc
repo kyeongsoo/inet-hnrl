@@ -30,38 +30,6 @@ VLANTagger2::initialize()
 {
     VLANTagger::initialize();
 
-//    tagged = (bool) par("tagged");
-//    dynamicTagging = (bool) par("dynamicTagging");
-//    minVid = (int) par("minVid");
-//    maxVid = (int) par("maxVid");
-//
-//    // assign the range of VID values into 'vidSet'
-//    // FIXME allow arbitrary set of VID values later
-//    vidSet.clear();
-//    for (int i = minVid; i <= maxVid; i++)
-//    {
-//        vidSet.push_back((VID)i);
-//    }
-//
-//    if (tagged == false)
-//    {
-//        if (dynamicTagging == false)
-//        { // untagged port with static tagging
-//            if (vidSet.size() == 1)
-//            {
-//                pvid = vidSet[0];
-//            }
-//            else
-//            {
-//                error("No or multiple PVIDs for untagged port with static tagging.");
-//            }
-//        }
-//        else
-//        { // get an access to the relay module for untagged port with dynamic tagging
-//            cModule *relayModule = getParentModule()->getSubmodule("relayUnit");
-//            relay = check_and_cast<MACRelayUnitNPWithVLAN *>(relayModule);
-//        }
-//    }
     stackedVlans = (bool) par("stackedVlans");
 }
 

@@ -59,28 +59,6 @@ static char *fgetline(FILE *fp)
     return line;
 }
 
-//MACRelayUnitNPWithVLAN::MACRelayUnitNPWithVLAN()
-//{
-//    endProcEvents = NULL;
-//    numCPUs = 0;
-//}
-//
-//MACRelayUnitNPWithVLAN::~MACRelayUnitNPWithVLAN()
-//{
-//    for (int i=0; i<numCPUs; i++)
-//    {
-//        cMessage *endProcEvent = endProcEvents[i];
-//        EthernetIIFrameWithVLAN *etherFrame = (EthernetIIFrameWithVLAN *)endProcEvent->getContextPointer();
-//        if (etherFrame)
-//        {
-//            endProcEvent->setContextPointer(NULL);
-//            delete etherFrame;
-//        }
-//        cancelAndDelete(endProcEvent);
-//    }
-//    delete [] endProcEvents;
-//}
-
 void MACRelayUnitNPWithVLAN::initialize(int stage)
 {
     if (stage == 0)
@@ -400,104 +378,15 @@ void MACRelayUnitNPWithVLAN::readAddressTable(const char* fileName)
     fclose(fp);
 }
 
-//void MACRelayUnitNPWithVLAN::handleMessage(cMessage *msg)
-//{
-//    if (!msg->isSelfMessage())
-//    {
-//        // Frame received from MAC unit
-//        handleIncomingFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
-//    }
-//    else
-//    {
-//        // Self message signal used to indicate a frame has finished processing
-//        processFrame(msg);
-//    }
-//}
-
-//void MACRelayUnitNPWithVLAN::handleIncomingFrame(EthernetIIFrameWithVLAN *frame)
-//{
-//    // If buffer not full, insert payload frame into buffer and process the frame in parallel.
-//
-//    long length = frame->getByteLength();
-//    if (length + bufferUsed < bufferSize)
-//    {
-//        bufferUsed += length;
-//
-//        // send PAUSE if above watermark
-//        if (pauseUnits>0 && highWatermark>0 && bufferUsed>=highWatermark && simTime()-pauseLastSent>pauseInterval)
-//        {
-//            // send PAUSE on all ports
-//            for (int i=0; i<numPorts; i++)
-//                sendPauseFrame(i, pauseUnits);
-//            pauseLastSent = simTime();
-//        }
-//
-//        // assign frame to a free CPU (if there is one)
-//        int i;
-//        for (i=0; i<numCPUs; i++)
-//            if (!endProcEvents[i]->isScheduled())
-//                break;
-//        if (i==numCPUs)
-//        {
-//            EV << "All CPUs busy, enqueueing incoming frame " << frame << " for later processing\n";
-//            queue.insert(frame);
-//        }
-//        else
-//        {
-//            EV << "Idle CPU-" << i << " starting processing of incoming frame " << frame << endl;
-//            cMessage *msg = endProcEvents[i];
-//            ASSERT(msg->getContextPointer()==NULL);
-//            msg->setContextPointer(frame);
-//            scheduleAt(simTime() + processingTime, msg);
-//        }
-//    }
-//    // Drop the frame and record the number of dropped frames
-//    else
-//    {
-//        EV << "Buffer full, dropping frame " << frame << endl;
-//        delete frame;
-//        ++numDroppedFrames;
-//    }
-//
-//    // Record statistics of buffer usage levels
-//    bufferLevel.record(bufferUsed);
-//}
-
-//void MACRelayUnitNPWithVLAN::processFrame(cMessage *msg)
-//{
-//    int cpu = msg->getKind();
-//    EthernetIIFrameWithVLAN *frame = (EthernetIIFrameWithVLAN *) msg->getContextPointer();
-//    ASSERT(frame);
-//    msg->setContextPointer(NULL);
-//    long length = frame->getByteLength();
-//    int inputport = frame->getArrivalGate()->getIndex();
-//
-//    EV << "CPU-" << cpu << " completed processing of frame " << frame << endl;
-//
-//    handleAndDispatchFrame(frame, inputport);
-//    printAddressTable();
-//
-//    bufferUsed -= length;
-//    bufferLevel.record(bufferUsed);
-//
-//    numProcessedFrames++;
-//
-//    // Process next frame in queue if they are pending
-//    if (!queue.empty())
-//    {
-//        EthernetIIFrameWithVLAN *newframe = (EthernetIIFrameWithVLAN *) queue.pop();
-//        msg->setContextPointer(newframe);
-//        EV << "CPU-" << cpu << " starting processing of frame " << newframe << endl;
-//        scheduleAt(simTime()+processingTime, msg);
-//    }
-//    else
-//    {
-//        EV << "CPU-" << cpu << " idle\n";
-//    }
-//}
-
-//void MACRelayUnitNPWithVLAN::finish()
-//{
-//    recordScalar("processed frames", numProcessedFrames);
-//    recordScalar("dropped frames", numDroppedFrames);
-//}
+void MACRelayUnitNPWithVLAN::sendPauseFrameWithVLANAddress(MACAddress& address, VID vid, int pauseUnits)
+{
+    int portno = getPortForVLANAddress(address, vid);
+    if (portno == -1) {
+        EV << getFullPath() << endl;
+        error("There is an error in VLAN configuration.");
+    }
+    else
+    {
+        sendPauseFrame(portno, pauseUnits);
+    }
+}

@@ -20,68 +20,33 @@
 
 Define_Module(DropTailRRVLANTBFQueue3);
 
-DropTailRRVLANTBFQueue3::DropTailRRVLANTBFQueue3()
+void DropTailRRVLANTBFQueue3::initialize(int stage)
 {
-}
+    DropTailRRVLANTBFQueue2::initialize(stage);
 
-DropTailRRVLANTBFQueue3::~DropTailRRVLANTBFQueue3()
-{
-    for (int i=0; i<numFlows; i++)
-    {
-        delete voq[i];
-        cancelAndDelete(conformityTimer[i]);
+    // Relay Unit
+    relay = check_and_cast<MACRelayUnitNPWithVLAN *>(getParentModule()->getParentModule()->getSubmodule("relayUnit"));
+
+    // Per-subscriber VOQs
+    voqThreshold = par("voqThreshold").longValue();
+
+    if (stage == 1)
+    {   // the following should be initialized in the 2nd stage (stage==1)
+        // because token bucket meters are not initialized in the 1st stage yet.
+
+        // 1 pause unit is 512 bit times; we assume 10Gb MAC here.
+        // TODO: set it properly with the actual TX rate of a MAC
+        pauseUnits.assign(numFlows, 0);
+        pauseInterval.assign(numFlows, 0.0);
+        pauseLastSent = 0.0;
+        for (int i=0; i<numFlows; i++)
+        {
+            pauseInterval[i] = (voqThreshold * 8)
+                    / tbm[i]->getMeanRate(); // in second
+            pauseUnits[i] = int(pauseInterval[i] * 1.0e9 / PAUSE_BITTIME);
+            pauseUnits[i] = pauseUnits[i] > 65535 ? 65535 : pauseUnits[i];
+        }
     }
-}
-
-void DropTailRRVLANTBFQueue3::initialize()
-{
-    DropTailRRVLANTBFQueue2::initialize();
-
-//    outGate = gate("out");
-//
-//    // general
-//    numFlows = par("numFlows");
-//
-//    // VLAN classifier
-//    const char *classifierClass = par("classifierClass").stringValue();
-//    classifier = check_and_cast<IQoSClassifier *>(createOne(classifierClass));
-//    classifier->setMaxNumQueues(numFlows);
-//    const char *vids = par("vids").stringValue();
-//    classifier->initialize(vids);
-//
-//    // Token bucket meters
-//    tbm.assign(numFlows, (BasicTokenBucketMeter *)NULL);
-//    cModule *mac = getParentModule();
-//    for (int i=0; i<numFlows; i++)
-//    {
-//        cModule *meter = mac->getSubmodule("meter", i);
-//        tbm[i] = check_and_cast<BasicTokenBucketMeter *>(meter);
-//    }
-//
-//    // Per-subscriber VOQs
-//    voqSize = par("voqSize").longValue();
-//    voq.assign(numFlows, (cQueue *)NULL);
-//    conformityFlag.assign(numFlows, false);
-//    conformityTimer.assign(numFlows, (cMessage *)NULL);
-//    for (int i=0; i<numFlows; i++)
-//    {
-//        char buf[32];
-//        sprintf(buf, "queue-%d", i);
-//        voq[i] = new cQueue(buf);
-//        conformityTimer[i] = new cMessage("Conformity Timer", i);   // message kind carries a voq index
-//    }
-//    voqCurrentSize.assign(numFlows, 0);
-//
-//    // RR scheduler
-//    currentFlowIndex = 0;
-//
-//    // statistic
-//    warmupFinished = false;
-//    numBitsSent.assign(numFlows, 0.0);
-//    numPktsReceived.assign(numFlows, 0);
-//    numPktsDropped.assign(numFlows, 0);
-//    numPktsUnshaped.assign(numFlows, 0);
-//    numPktsSent.assign(numFlows, 0);
 }
 
 void DropTailRRVLANTBFQueue3::handleMessage(cMessage *msg)
@@ -225,139 +190,28 @@ bool DropTailRRVLANTBFQueue3::enqueue(cMessage *msg)
     }
     else
     {
+        // flow control: send PAUSE if above threshold
+        // TODO: Implement it for non-stacked VLANs as well
+        if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
+        {
+            EthernetIIFrameWithVLAN *vlanFrame = dynamic_cast<EthernetIIFrameWithVLAN *>(msg);
+            uint16_t tpid = vlanFrame->getTpid();
+
+            if (tpid == 0x88A8)
+            {   // stacked-VLAN frame
+                if ((voqCurrentSize[flowIndex] + pktByteLength > voqThreshold)
+                        && (SIMTIME_DBL(simTime()) - pauseLastSent > pauseInterval[flowIndex]))
+                {
+                    relay->sendPauseFrameWithVLANAddress(vlanFrame->getSrc(),
+                            vlanFrame->getVid(), pauseUnits[flowIndex]);
+                    pauseLastSent = SIMTIME_DBL(simTime());
+                }
+            }
+        }
+
         voq[flowIndex]->insert(msg);
         voqCurrentSize[flowIndex] += pktByteLength;
+
         return false;
     }
-}
-
-cMessage *DropTailRRVLANTBFQueue3::dequeue()
-{
-    bool found = false;
-    int startFlowIndex = (currentFlowIndex + 1) % numFlows;  // search from the next queue for a frame to transmit
-    for (int i = 0; i < numFlows; i++)
-    {
-       if (conformityFlag[(i+startFlowIndex)%numFlows])
-       {
-           currentFlowIndex = (i+startFlowIndex)%numFlows;
-           found = true;
-           break;
-       }
-    }
-
-    if (found == false)
-    {
-        // TO DO: further processing?
-        return NULL;
-    }
-
-    cMessage *msg = (cMessage *)voq[currentFlowIndex]->pop();
-    voqCurrentSize[currentFlowIndex] -= PK(msg)->getByteLength();
-
-    // TO DO: update statistics
-
-    // conformity processing for the HOL frame
-    if (voq[currentFlowIndex]->isEmpty() == false)
-    {
-        cPacket *frontPkt = check_and_cast<cPacket *>(voq[currentFlowIndex]->front());
-        int pktLength = frontPkt->getBitLength();
-        if (tbm[currentFlowIndex]->meterPacket(frontPkt) == 0)
-        {   // packet is conformed
-            conformityFlag[currentFlowIndex] = true;
-        }
-        else
-        {
-            conformityFlag[currentFlowIndex] = false;
-            triggerConformityTimer(currentFlowIndex, pktLength);
-        }
-    }
-    else
-    {
-        conformityFlag[currentFlowIndex] = false;
-    }
-
-    // return a packet from the scheduled queue for transmission
-    return (msg);
-}
-
-void DropTailRRVLANTBFQueue3::sendOut(cMessage *msg)
-{
-    send(msg, outGate);
-}
-
-void DropTailRRVLANTBFQueue3::requestPacket()
-{
-    Enter_Method("requestPacket()");
-
-    cMessage *msg = dequeue();
-    if (msg==NULL)
-    {
-        packetRequested++;
-    }
-    else
-    {
-        if (warmupFinished == true)
-        {
-            numBitsSent[currentFlowIndex] += (check_and_cast<cPacket *>(msg))->getBitLength();
-            numPktsSent[currentFlowIndex]++;
-        }
-        sendOut(msg);
-    }
-}
-
-// trigger TBF conformity timer for the HOL frame in the queue,
-// indicating that enough tokens will be available for its transmission
-void DropTailRRVLANTBFQueue3::triggerConformityTimer(int flowIndex, int pktLength)
-{
-    Enter_Method("triggerConformityCounter()");
-
-    double meanDelay = 0.0;
-    if ((unsigned long long)pktLength > tbm[flowIndex]->getMeanBucketLength())
-    {
-        meanDelay = (pktLength - tbm[flowIndex]->getMeanBucketLength()) / tbm[flowIndex]->getMeanRate();
-    }
-    double peakDelay = 0.0;
-    if (pktLength > tbm[flowIndex]->getPeakBucketLength())
-    {
-        peakDelay = (pktLength - tbm[flowIndex]->getPeakBucketLength()) / tbm[flowIndex]->getPeakRate();
-    }
-
-// DEBUG
-    EV << "** For VOQ[" << flowIndex << "]:" << endl;
-    EV << "Packet Length = " << pktLength << endl;
-    EV << "Delay for Mean TBF = " << meanDelay << endl;
-    EV << "Delay for Peak TBF = " << peakDelay << endl;
-    EV << "Current Time = " << simTime() << endl;
-    EV << "Counter Expiration Time = " << simTime() + std::max(meanDelay, peakDelay) << endl;
-    tbm[flowIndex]->dumpStatus();
-// DEBUG
-
-    scheduleAt(simTime() + std::max(meanDelay, peakDelay), conformityTimer[flowIndex]);
-}
-
-void DropTailRRVLANTBFQueue3::finish()
-{
-    unsigned long sumPktsReceived = 0;
-    unsigned long sumPktsDropped = 0;
-    unsigned long sumPktsShaped = 0;
-
-    for (int i=0; i < numFlows; i++)
-    {
-        std::stringstream ss_received, ss_dropped, ss_shaped, ss_sent, ss_throughput;
-        ss_received << "packets received from flow[" << i << "]";
-        ss_dropped << "packets dropped from flow[" << i << "]";
-        ss_shaped << "packets shaped from flow[" << i << "]";
-        ss_sent << "packets sent from flow[" << i << "]";
-        ss_throughput << "bits/sec sent from flow[" << i << "]";
-        recordScalar((ss_received.str()).c_str(), numPktsReceived[i]);
-        recordScalar((ss_dropped.str()).c_str(), numPktsDropped[i]);
-        recordScalar((ss_shaped.str()).c_str(), numPktsReceived[i]-numPktsUnshaped[i]);
-        recordScalar((ss_sent.str()).c_str(), numPktsSent[i]);
-        recordScalar((ss_throughput.str()).c_str(), numBitsSent[i]/(simTime()-simulation.getWarmupPeriod()).dbl());
-        sumPktsReceived += numPktsReceived[i];
-        sumPktsDropped += numPktsDropped[i];
-        sumPktsShaped += numPktsReceived[i] - numPktsUnshaped[i];
-    }
-    recordScalar("overall packet loss rate", sumPktsDropped/double(sumPktsReceived));
-    recordScalar("overall packet shaped rate", sumPktsShaped/double(sumPktsReceived));
 }

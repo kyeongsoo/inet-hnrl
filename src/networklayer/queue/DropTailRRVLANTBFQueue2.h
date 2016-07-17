@@ -35,6 +35,7 @@
  */
 class INET_API DropTailRRVLANTBFQueue2 : public PassiveQueueBase
 {
+  public:
     // type definitions for member variables
     typedef std::vector<bool> BoolVector;
     typedef std::vector<double> DoubleVector;
@@ -88,7 +89,8 @@ class INET_API DropTailRRVLANTBFQueue2 : public PassiveQueueBase
     virtual ~DropTailRRVLANTBFQueue2();
 
   protected:
-    virtual void initialize();
+    virtual void initialize(int stage);
+    virtual int numInitStages() const {return 2;}
 
     /**
      * Redefined from PassiveQueueBase.

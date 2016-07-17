@@ -33,7 +33,7 @@ DropTailRRVLANTBFQueue2::~DropTailRRVLANTBFQueue2()
     }
 }
 
-void DropTailRRVLANTBFQueue2::initialize()
+void DropTailRRVLANTBFQueue2::initialize(int stage)
 {
     PassiveQueueBase::initialize();
 
