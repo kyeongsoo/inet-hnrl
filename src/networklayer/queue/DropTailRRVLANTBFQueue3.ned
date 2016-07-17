@@ -27,6 +27,7 @@ package inet.networklayer.queue;
 // of back pressure flow control: When a VOQ passes a threshold, it can send an
 // Ethernet pause frame to a port, from which a flow corresponding to the VOQ
 // comes. This is essential to the implementation of hybrid ISP traffic control.
+// Note that this is enabled only for flows with stacked-VLANs.
 //
 // Conforms to the OutputQueue interface.
 //
@@ -36,9 +37,9 @@ package inet.networklayer.queue;
 simple DropTailRRVLANTBFQueue3 like OutputQueue
 {
     parameters:
-        int numFlows = default(1); // number of per-VLAN queues
+        int numFlows = default(1); // number of flows (i.e., per-VLAN queues)
         int voqSize @unit(B) = default(15220000B); // per-flow virtual output queue (VOQ) size; default value corresponds to 10,000 maximum-sized VLAN frames.
-		int voqThreshold @unit(B) = default(int(0.25*this.voqSize)); // voq threshold to detect link congestion
+		int voqThreshold @unit(B) = default(int(0.25*this.voqSize)*1B); // VOQ threshold to detect link congestion
 		string classifierClass = default("BasicVLANClassifier");  // class that inherits from IQoSClassifier
 		string vids = default("");	// VIDs used for initialization of index table
         @display("i=block/queue");

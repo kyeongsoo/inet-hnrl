@@ -34,8 +34,6 @@ class EthernetIIFrameWithVLAN;
 class INET_API MACRelayUnitNPWithVLAN : public MACRelayUnitNP
 {
   public:
-//    MACRelayUnitNPWithVLAN();
-//    virtual ~MACRelayUnitNPWithVLAN();
 
   protected:
     // An entry of the VLAN-augmented Address Lookup Table
@@ -76,27 +74,6 @@ class INET_API MACRelayUnitNPWithVLAN : public MACRelayUnitNP
 
     VLANRegistrationTable vlanTable;    // VLAN registration table
 
-    // the shared queue
-//    cQueue queue;
-
-    // Parameters controlling how the switch operates
-//    int numCPUs;                // number of processors
-//    simtime_t processingTime;   // Time taken to switch and process a frame
-//    int bufferSize;             // Max size of the buffer
-//    long highWatermark;         // if buffer goes above this level, send PAUSE frames
-//    int pauseUnits;             // "units" field in PAUSE frames
-//    simtime_t pauseInterval;    // min time between sending PAUSE frames
-
-    // Other variables
-//    int bufferUsed;             // Amount of buffer used to store frames
-//    cMessage **endProcEvents;   // self-messages, one for each processor
-//    simtime_t pauseLastSent;
-
-    // Parameters for statistics collection
-//    long numProcessedFrames;
-//    long numDroppedFrames;
-//    cOutVector bufferLevel;
-
   protected:
     /** @name Redefined MACRelayUnitNP member functions. */
     //@{
@@ -109,30 +86,7 @@ class INET_API MACRelayUnitNPWithVLAN : public MACRelayUnitNP
      * For multi-stage initialization
      */
     virtual int numInitStages() const {return 2;}
-
-//    /**
-//     * Calls handleIncomingFrame() for frames arrived from outside,
-//     * and processFrame() for self messages.
-//     */
-//    virtual void handleMessage(cMessage *msg);
-
-//    /**
-//     * Writes statistics.
-//     */
-//    virtual void finish();
     //@}
-
-//    /**
-//     * Handle incoming Ethernet frame with VLAN tag: if buffer full discard it,
-//     * otherwise, insert it into buffer and start processing if a processor is free.
-//     */
-//    virtual void handleIncomingFrame(EthernetIIFrameWithVLAN *msg);
-
-//    /**
-//     * Triggered when a frame has completed processing, it routes the frame
-//     * to the appropriate port, and starts processing the next frame.
-//     */
-//    virtual void processFrame(cMessage *msg);
 
     /**
      *---------------------------------------------------------------------------
@@ -163,16 +117,6 @@ class INET_API MACRelayUnitNPWithVLAN : public MACRelayUnitNP
     */
    virtual void readAddressTable(const char* fileName);
 
-//    /**
-//     * Enters address into table.
-//     */
-//    virtual void updateTableWithAddress(MACAddress& address, VID vid, int portno);
-
-//    /**
-//     * Returns output port for address, or -1 if unknown.
-//     */
-//    virtual int getPortForAddress(MACAddress& address);
-
    /**
     * Prints contents of address table on ev.
     */
@@ -187,12 +131,6 @@ class INET_API MACRelayUnitNPWithVLAN : public MACRelayUnitNP
     * Utility function: throws out oldest (not necessarily aged) entry from table.
     */
    virtual void removeOldestTableEntry();
-//
-//    /**
-//     * Utility function (for use by subclasses) to send a flow control
-//     * PAUSE frame on the given port.
-//     */
-//    virtual void sendPauseFrame(int portno, int pauseUnits);
    //@}
 
    /**
@@ -226,6 +164,12 @@ class INET_API MACRelayUnitNPWithVLAN : public MACRelayUnitNP
     * Returns vid for address, or -1 if unknown.
     */
    virtual int getVIDForMACAddress(MACAddress address);
+
+   /**
+     * Utility function (for use by subclasses) to send a flow control
+     * PAUSE frame on the given port.
+     */
+   virtual void sendPauseFrameWithVLANAddress(MACAddress& address, VID vid, int pauseUnits);
    //@}
 };
 

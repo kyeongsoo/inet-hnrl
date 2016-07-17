@@ -74,6 +74,7 @@ void CSFQVLANQueue::initialize(int stage)
         estRateVectors.push_back(vector);
 #endif
     }
+
     if (stage == 1)
     {   // the following should be initialized in the 2nd stage (stage==1)
         // because token bucket meters are not initialized in the 1st stage yet.
@@ -132,7 +133,7 @@ void CSFQVLANQueue::initialize(int stage)
         numPktsDropped.assign(numFlows, 0);
         numPktsConformed.assign(numFlows, 0);
         numPktsSent.assign(numFlows, 0);
-    }   // end of if () for stage checking
+    } // end of if () for stage checking
 }
 
 void CSFQVLANQueue::handleMessage(cMessage *msg)

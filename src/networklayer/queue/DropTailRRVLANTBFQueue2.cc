@@ -33,55 +33,65 @@ DropTailRRVLANTBFQueue2::~DropTailRRVLANTBFQueue2()
     }
 }
 
-void DropTailRRVLANTBFQueue2::initialize()
+void DropTailRRVLANTBFQueue2::initialize(int stage)
 {
-    PassiveQueueBase::initialize();
+    if (stage == 0)
+    {   // the following should be initialized in the 1st stage (stage==0);
+        // otherwise VLAN ID initialization is not working properly.
 
-    outGate = gate("out");
+        PassiveQueueBase::initialize();
 
-    // general
-    numFlows = par("numFlows");
+        outGate = gate("out");
 
-    // VLAN classifier
-    const char *classifierClass = par("classifierClass").stringValue();
-    classifier = check_and_cast<IQoSClassifier *>(createOne(classifierClass));
-    classifier->setMaxNumQueues(numFlows);
-    const char *vids = par("vids").stringValue();
-    classifier->initialize(vids);
+        // general
+        numFlows = par("numFlows");
 
-    // Token bucket meters
-    tbm.assign(numFlows, (BasicTokenBucketMeter *)NULL);
-    cModule *mac = getParentModule();
-    for (int i=0; i<numFlows; i++)
-    {
-        cModule *meter = mac->getSubmodule("meter", i);
-        tbm[i] = check_and_cast<BasicTokenBucketMeter *>(meter);
+        // VLAN classifier
+        const char *classifierClass = par("classifierClass").stringValue();
+        classifier = check_and_cast<IQoSClassifier *>(createOne(classifierClass));
+        classifier->setMaxNumQueues(numFlows);
+        const char *vids = par("vids").stringValue();
+        classifier->initialize(vids);
+
+        // Per-subscriber VOQs
+        voqSize = par("voqSize").longValue();
+        voq.assign(numFlows, (cQueue *)NULL);
+        conformityFlag.assign(numFlows, false);
+        conformityTimer.assign(numFlows, (cMessage *)NULL);
+        for (int i=0; i<numFlows; i++)
+        {
+            char buf[32];
+            sprintf(buf, "queue-%d", i);
+            voq[i] = new cQueue(buf);
+            conformityTimer[i] = new cMessage("Conformity Timer", i);   // message kind carries a voq index
+        }
+        voqCurrentSize.assign(numFlows, 0);
+
+        // RR scheduler
+        currentFlowIndex = 0;
+
+        // statistic
+        warmupFinished = false;
+        numBitsSent.assign(numFlows, 0.0);
+        numPktsReceived.assign(numFlows, 0);
+        numPktsDropped.assign(numFlows, 0);
+        numPktsUnshaped.assign(numFlows, 0);
+        numPktsSent.assign(numFlows, 0);
     }
 
-    // Per-subscriber VOQs
-    voqSize = par("voqSize").longValue();
-    voq.assign(numFlows, (cQueue *)NULL);
-    conformityFlag.assign(numFlows, false);
-    conformityTimer.assign(numFlows, (cMessage *)NULL);
-    for (int i=0; i<numFlows; i++)
-    {
-        char buf[32];
-        sprintf(buf, "queue-%d", i);
-        voq[i] = new cQueue(buf);
-        conformityTimer[i] = new cMessage("Conformity Timer", i);   // message kind carries a voq index
-    }
-    voqCurrentSize.assign(numFlows, 0);
+    if (stage == 1)
+    {   // the following should be initialized in the 2nd stage (stage==1)
+        // because token bucket meters are not initialized in the 1st stage yet.
+        // Token bucket meters
 
-    // RR scheduler
-    currentFlowIndex = 0;
-
-    // statistic
-    warmupFinished = false;
-    numBitsSent.assign(numFlows, 0.0);
-    numPktsReceived.assign(numFlows, 0);
-    numPktsDropped.assign(numFlows, 0);
-    numPktsUnshaped.assign(numFlows, 0);
-    numPktsSent.assign(numFlows, 0);
+        tbm.assign(numFlows, (BasicTokenBucketMeter *)NULL);
+        cModule *mac = getParentModule();
+        for (int i=0; i<numFlows; i++)
+        {
+            cModule *meter = mac->getSubmodule("meter", i);
+            tbm[i] = check_and_cast<BasicTokenBucketMeter *>(meter);
+        }
+    } // end of if () for stage checking
 }
 
 void DropTailRRVLANTBFQueue2::handleMessage(cMessage *msg)
