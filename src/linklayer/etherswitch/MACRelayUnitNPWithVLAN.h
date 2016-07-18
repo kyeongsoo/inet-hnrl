@@ -86,6 +86,7 @@ class INET_API MACRelayUnitNPWithVLAN : public MACRelayUnitNP
      * For multi-stage initialization
      */
     virtual int numInitStages() const {return 2;}
+    //@}
 
     /**
      *---------------------------------------------------------------------------
