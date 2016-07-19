@@ -90,7 +90,7 @@ class INET_API DropTailRRVLANTBFQueue2 : public PassiveQueueBase
 
   protected:
     virtual void initialize(int stage);
-    virtual int numInitStages() const {return 2;}
+    virtual int numInitStages() const {return 3;}
 
     /**
      * Redefined from PassiveQueueBase.

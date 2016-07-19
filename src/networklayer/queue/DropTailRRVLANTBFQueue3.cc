@@ -24,11 +24,14 @@ void DropTailRRVLANTBFQueue3::initialize(int stage)
 {
     DropTailRRVLANTBFQueue2::initialize(stage);
 
-    // Relay Unit
-    relay = check_and_cast<MACRelayUnitNPWithVLAN *>(getParentModule()->getParentModule()->getSubmodule("relayUnit"));
+    if (stage == 0)
+    {
+        // Relay Unit
+        relay = check_and_cast<MACRelayUnitNPWithVLAN *>(getParentModule()->getParentModule()->getSubmodule("relayUnit"));
 
-    // Per-subscriber VOQs
-    voqThreshold = par("voqThreshold").longValue();
+        // Per-subscriber VOQs
+        voqThreshold = par("voqThreshold").longValue();
+    }
 
     if (stage == 1)
     {   // the following should be initialized in the 2nd stage (stage==1)
@@ -42,7 +45,7 @@ void DropTailRRVLANTBFQueue3::initialize(int stage)
         for (int i=0; i<numFlows; i++)
         {
             pauseInterval[i] = (voqThreshold * 8)
-                    / tbm[i]->getMeanRate(); // in second
+                / tbm[i]->getMeanRate(); // in second
             pauseUnits[i] = int(pauseInterval[i] * 1.0e9 / PAUSE_BITTIME);
             pauseUnits[i] = pauseUnits[i] > 65535 ? 65535 : pauseUnits[i];
         }
