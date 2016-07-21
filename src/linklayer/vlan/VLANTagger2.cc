@@ -17,14 +17,6 @@
 // Register modules.
 Define_Module(VLANTagger2);
 
-//VLANTagger2::VLANTagger2()
-//{
-//}
-//
-//VLANTagger2::~VLANTagger2()
-//{
-//}
-
 void
 VLANTagger2::initialize()
 {
@@ -106,33 +98,22 @@ void VLANTagger2::handleMessage(cMessage *msg)
     }
     else if (msg->getArrivalGateId() == findGate("relayg$i"))
     {   // egress rule checking
-        if (tagged)
-        {
-            // processTaggedFrame(msg);
-            send(msg, "macg$o");
+        if ((tagged == false) && (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL))
+        { // a VLAN frame at an untagged port
+            EthernetIIFrame *frame = untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
+            if (frame != NULL)
+            {
+                send(frame, "macg$o");
+            }
         }
         else
-        {
-            if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
-            {
-//                untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
-//                // processTaggedFrame(msg);
-//                send(msg, "macg$o");
-                EthernetIIFrame *frame = untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg));
-                if (frame != NULL)
-//                    send(untagFrame(check_and_cast<EthernetIIFrameWithVLAN *>(msg)), "macg$o");
-                    send(frame, "macg$o");
-            }
-            else
-            {
-                error("Unknown frame. Modify VLANTagger2 to make it allowed or filtered.");
-                delete msg;
-            }
-        }            
+        { // non-VLAN frames (e.g., Ethernet pause)
+            send(msg, "macg$o");
+        }
     }
     else
     {
-        error("Unknown arrival gate");            
+        error("Unknown arrival gate");
     }
 }
 
@@ -163,9 +144,6 @@ void VLANTagger2::tagPushFrame(EthernetIIFrameWithVLAN *frame, VLANFrameVector& 
     vlanFrame->getInnerTags().push(vlanTag);
     vlanFrame->setTpid(0x88A8); // for S-TAG
     vlanFrame->setByteLength(vlanFrame->getByteLength() + ETHER_VLAN_TAG_LENGTH); // double tags
-//    cPacket *pkt = frame->decapsulate();
-//    if (pkt != NULL)
-//        vlanFrame->encapsulate(pkt);
     delete frame;
 
     VIDVector::iterator it;
