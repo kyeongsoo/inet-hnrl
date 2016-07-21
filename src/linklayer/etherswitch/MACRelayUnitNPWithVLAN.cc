@@ -380,6 +380,8 @@ void MACRelayUnitNPWithVLAN::readAddressTable(const char* fileName)
 
 void MACRelayUnitNPWithVLAN::sendPauseFrameWithVLANAddress(MACAddress& address, VID vid, int pauseUnits)
 {
+    Enter_Method_Silent(); // this function can be used my other modules
+
     int portno = getPortForVLANAddress(address, vid);
     if (portno == -1) {
         EV << getFullPath() << endl;
