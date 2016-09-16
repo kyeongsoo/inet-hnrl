@@ -27,3 +27,24 @@ backups
 xxx
 /3rdparty
 /tmp/
+
+# added by Joseph Kim
+TAGS
+*.RData
+*.Rhistory
+*.anf
+*.db
+*.debug
+*.dly
+*.ecr
+*.eps
+*.new
+*.old
+*.org
+*.png
+*.sca
+*.thr
+*.trf
+*.vec
+results/
+/etc/omnetpp-extension/

@@ -31,8 +31,15 @@ Define_Module(TCP);
 bool TCP::testing;
 bool TCP::logverbose;
 
+// Ephemeral port range settings
+// - BSD: 1024...4999
+// - IANA: 49152...65535
+//		--> may cause issues with the current INET implementation
+//		    due to its use of *** signed short *** for port numbers
 #define EPHEMERAL_PORTRANGE_START 1024
-#define EPHEMERAL_PORTRANGE_END   5000
+//#define EPHEMERAL_PORTRANGE_START 49152
+//#define EPHEMERAL_PORTRANGE_END   5000
+#define EPHEMERAL_PORTRANGE_END   32767
 
 static std::ostream& operator<<(std::ostream& os, const TCP::SockPair& sp)
 {
@@ -367,7 +374,8 @@ void TCP::addForkedConnection(TCPConnection *conn, TCPConnection *newConn, IPvXA
     key.appGateIndex = conn->appGateIndex;
     key.connId = conn->connId;
     tcpAppConnMap.erase(key);
-    key.connId = conn->connId = ev.getUniqueNumber();
+    // key.connId = conn->connId = ev.getUniqueNumber();
+    key.connId =  conn->connId = int(ev.getUniqueNumber() & INT_MAX);
     tcpAppConnMap[key] = conn;
 
     // ...and newConn will live on with the old connId
