@@ -147,6 +147,19 @@ packet EtherPauseFrame extends EtherFrame
 
 
 //
+// Ethernet control frame
+//
+packet EtherPauseFrame extends EtherFrame
+{
+    int opcode; // 2-byte MAC control opcode (e.g., '00-01' for PAUSE, '01-01' for priority-based flow control (PFC)
+    
+    // below are MAC control parameters; currently only for PFC
+    bool priorityEnableVector[8]; // each element indicating if the corresponding element of the timeVector paramter is valid
+    int timeVector[8]; // a list of eight 2-octet fields
+}
+
+
+//
 // Ethernet model components (EtherMAC, EtherHub and EtherBus) send this
 // message at the beginning of the simulation, so that "auto"-valued "txrate"
 // and "duplex" parameters of EtherMAC can be initialized. The purpose is
