@@ -21,10 +21,157 @@
 
 Define_Module(DRRVLANQueue4);
 
+DRRVLANQueue4::DRRVLANQueue4()
+{
+    endPFCMsg.fill((cMessage *) NULL);
+}
+
+DRRVLANQueue4::~DRRVLANQueue4()
+{
+    for (int i = 0; i < N_PFC_PRIORITIES; i++)
+        cancelAndDelete(endPFCMsg[i]);
+}
+
 void DRRVLANQueue4::initialize()
 {
-    // initialize states
+    DRRVLANQueue3::initialize();
 
+    // states
+    priorityPaused.fill(false);
+
+    // self messages
+    for (int i = 0; i < N_PFC_PRIORITIES; i++)
+        endPFCMsg[i] = new cMessage("End of PFC Pause Period", i);   // message kind carries a priority index
+}
+
+void DRRVLANQueue4::handleMessage(cMessage *msg)
+{
+    if (warmupFinished == false)
+    {   // start statistics gathering once the warm-up period has passed.
+        if (simTime() >= simulation.getWarmupPeriod()) {
+            warmupFinished = true;
+            for (int i = 0; i < numFlows; i++)
+            {
+                numPktsReceived[i] = voq[i]->getLength();   // take into account the packets already in VOQs
+            }
+        }
+    }
+
+    if (!msg->isSelfMessage())
+    {   // a packet arrives
+        int flowIndex = classifier->classifyPacket(msg);
+        int pktLength = PK(msg)->getBitLength();
+// DEBUG
+        ASSERT(pktLength > 0);
+// DEBUG
+        int pktByteLength = PK(msg)->getByteLength();
+        int color = tbm[flowIndex]->meterPacket(msg);   // result of metering; 0 for conformed and 1 for non-conformed packet
+        if (warmupFinished == true)
+        {
+            numPktsReceived[flowIndex]++;
+            if (color == 0)
+            {   // packet is conformed
+                numPktsConformed[flowIndex]++;
+            }
+        }
+
+        if (packetRequested > 0)
+        {
+            packetRequested--;
+#ifndef NDEBUG
+            pktReqVector.record(packetRequested);
+#endif
+            if (warmupFinished == true)
+            {
+                numBitsSent[flowIndex] += pktLength;
+                numPktsSent[flowIndex]++;
+                if (color == 0) {
+                    numConformedBitsSent[flowIndex] += pktLength;
+                    numConformedPktsSent[flowIndex]++;
+                } else {
+                    numNonconformedBitsSent[flowIndex] += pktLength;
+                    numNonconformedPktsSent[flowIndex]++;
+                }
+            }
+            sendOut(msg);
+        }
+        else
+        {
+            bool dropped = enqueue(msg);
+            if (dropped)
+            {
+                if (warmupFinished == true)
+                {
+                    numPktsDropped[flowIndex]++;
+                }
+                if (color == 0)
+                {   // exchange of the values of counters to emulate priority queueing
+                    if (nonconformedCounters[flowIndex] >= pktByteLength)
+                    {
+                        conformedCounters[flowIndex] += pktByteLength;
+                        nonconformedCounters[flowIndex] -= pktByteLength;
+#ifndef NDEBUG
+                        conformedCounterVector[flowIndex]->record(conformedCounters[flowIndex]);
+                        nonconformedCounterVector[flowIndex]->record(nonconformedCounters[flowIndex]);
+#endif
+                        // update active list for conformed packets
+                        IntList::iterator iter = std::find(conformedList.begin(), conformedList.end(), flowIndex);
+                        if (iter == conformedList.end())
+                        {   // add flow index to active list
+                            conformedList.push_back(flowIndex);
+                        }
+
+                        // update active list for non-conformed packets
+                        if (nonconformedCounters[flowIndex] == 0)
+                        {
+                            nonconformedList.remove(flowIndex);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (color == 0)
+                {   // packet is conformed
+                    conformedCounters[flowIndex] += pktByteLength;
+#ifndef NDEBUG
+                    conformedCounterVector[flowIndex]->record(conformedCounters[flowIndex]);
+#endif
+                    IntList::iterator iter = std::find(conformedList.begin(), conformedList.end(), flowIndex);
+                    if (iter == conformedList.end())
+                    {   // add flow index to active list
+                        conformedList.push_back(flowIndex);
+                    }
+                }
+                else
+                {   // packet is not conformed
+                    nonconformedCounters[flowIndex] += pktByteLength;
+#ifndef NDEBUG
+                    nonconformedCounterVector[flowIndex]->record(nonconformedCounters[flowIndex]);
+#endif
+                    IntList::iterator iter = std::find(nonconformedList.begin(), nonconformedList.end(), flowIndex);
+                    if (iter == nonconformedList.end())
+                    {   // add flow index to active list
+                        nonconformedList.push_back(flowIndex);
+                    }
+                }
+            }
+        }
+
+        if (ev.isGUI())
+        {
+            char buf[40];
+            sprintf(buf, "q rcvd: %d\nq dropped: %d", numPktsReceived[flowIndex], numPktsDropped[flowIndex]);
+            getDisplayString().setTagArg("t", 0, buf);
+        }
+    }   // end of if () for non-self message
+    else
+    {   // endPFCMsg
+        // DEBUG
+        ASSERT(priorityPaused[msg->getKind()] == true);
+        // DEBUG
+        priorityPaused[msg->getKind()] = false;
+    }
 }
 
 cMessage *DRRVLANQueue4::dequeue()
@@ -60,76 +207,121 @@ cMessage *DRRVLANQueue4::dequeue()
         }
     }   // end of while ()
 
-    // check then the list of queues with non-zero non-conformed bytes and do regular DRR scheduling
-    if (nonconformedList.empty())
+    // Check then the list of queues with non-zero non-conformed bytes and do regular
+    // DRR scheduling only when priorityPaused[1] is false; we associate non-conformed
+    // traffic with the priority value of 1.
+    //
+    // Note that, according to IEEE 802.1Q 2014 Appendix I.4, the priority value of 1
+    // is associated with 'Background' traffic and has a lower priority than the default
+    // value of 0 for 'Best Effort' traffic.
+    if (priorityPaused[1] == false)
     {
-        continuation = false;
-        return (msg);
-    }
-    else
-    {
-        while (!nonconformedList.empty())
+        if (nonconformedList.empty())
         {
-            int flowIndex = nonconformedList.front();
-            nonconformedList.pop_front();
-            // DEBUG
-            ASSERT(!voq[flowIndex]->isEmpty());
-            // DEBUG
-            deficitCounters[flowIndex] += continuation ? 0 : quanta[flowIndex];
-            continuation = false;   // reset the flag
-
-            int pktByteLength = PK(voq[flowIndex]->front())->getByteLength();
-            if ((deficitCounters[flowIndex] >= pktByteLength) && (nonconformedCounters[flowIndex] >= pktByteLength))
-            {   // serve the packet
-                msg = (cMessage *)voq[flowIndex]->pop();
-                voqCurrentSize[flowIndex] -= pktByteLength;
-                deficitCounters[flowIndex] -= pktByteLength;
-                nonconformedCounters[flowIndex] -= pktByteLength;
-#ifndef NDEBUG
-                nonconformedCounterVector[flowIndex]->record(nonconformedCounters[flowIndex]);
-#endif
-                // update statistics
-                numNonconformedBitsSent[flowIndex] += 8*pktByteLength;
-                numNonconformedPktsSent[flowIndex]++;
-            }
-
-            // check whether the deficit and non-conformed counter values are enough for the HOL packet
-            if (!voq[flowIndex]->isEmpty())
+            continuation = false;
+            return (msg);
+        }
+        else
+        {
+            while (!nonconformedList.empty())
             {
-                pktByteLength = PK(voq[flowIndex]->front())->getByteLength();                
-                if (nonconformedCounters[flowIndex] >= pktByteLength)
+                int flowIndex = nonconformedList.front();
+                nonconformedList.pop_front();
+                // DEBUG
+                ASSERT(!voq[flowIndex]->isEmpty());
+                // DEBUG
+                deficitCounters[flowIndex] += continuation ? 0 : quanta[flowIndex];
+                continuation = false;   // reset the flag
+
+                int pktByteLength = PK(voq[flowIndex]->front())->getByteLength();
+                if ((deficitCounters[flowIndex] >= pktByteLength) && (nonconformedCounters[flowIndex] >= pktByteLength))
+                {   // serve the packet
+                    msg = (cMessage *) voq[flowIndex]->pop();
+                    voqCurrentSize[flowIndex] -= pktByteLength;
+                    deficitCounters[flowIndex] -= pktByteLength;
+                    nonconformedCounters[flowIndex] -= pktByteLength;
+#ifndef NDEBUG
+                    nonconformedCounterVector[flowIndex]->record(nonconformedCounters[flowIndex]);
+#endif
+                    // update statistics
+                    numNonconformedBitsSent[flowIndex] += 8 * pktByteLength;
+                    numNonconformedPktsSent[flowIndex]++;
+                }
+
+                // check whether the deficit and non-conformed counter values are enough for the HOL packet
+                if (!voq[flowIndex]->isEmpty())
                 {
-                    if (deficitCounters[flowIndex] >= pktByteLength)
-                    {   // set the flag and put the index back to the front of the list
-                        continuation = true;
-                        nonconformedList.push_front(flowIndex);
+                    pktByteLength = PK(voq[flowIndex]->front())->getByteLength();
+                    if (nonconformedCounters[flowIndex] >= pktByteLength)
+                    {
+                        if (deficitCounters[flowIndex] >= pktByteLength)
+                        {   // set the flag and put the index back to the front of the list
+                            continuation = true;
+                            nonconformedList.push_front(flowIndex);
+                        }
+                        else
+                        {
+                            nonconformedList.push_back(flowIndex);
+                        }
                     }
                     else
                     {
-                        nonconformedList.push_back(flowIndex);
+                        deficitCounters[flowIndex] = 0;
                     }
                 }
                 else
                 {
                     deficitCounters[flowIndex] = 0;
                 }
-            }
-            else
-            {
-                deficitCounters[flowIndex] = 0;
-            }
 
-            if (msg != NULL)
-            {
-                break;  // from the while loop
-            }
-        } // end of while()
-    }
+                if (msg != NULL)
+                {
+                    break;  // from the while loop
+                }
+            } // end of while()
+        }
+    } // end of if() for checking priorityPaused[1]
 
     return (msg);   // just in case
 }
 
-void DRRVLANQueue4::processPFCCommand(PFCPriorityEnableVector pev, PFCTimeVector tv)
+void DRRVLANQueue4::scheduleEndPFCPeriod(int priority, int pauseUnits, simtime_t bitTime)
 {
+    // length is interpreted as 512-bit-time units
+    simtime_t pausePeriod = pauseUnits*PAUSE_BITTIME*bitTime;
+    scheduleAt(simTime()+pausePeriod, endPFCMsg[priority]);
+    priorityPaused[priority] = true;
+}
 
+void DRRVLANQueue4::processPFCCommand(PFCPriorityEnableVector pev, PFCTimeVector tv, simtime_t bitTime)
+{
+    Enter_Method("processPFCCommand()");
+
+    for (int i = 0; i < N_PFC_PRIORITIES; i++)
+    {
+        if (pev[i] == true)
+        {
+            EV << "PFC frame received for priority " << i << ", pausing for " << tv[i] << " time units\n";
+            if (priorityPaused[i] == false)
+            {
+                if (tv[i] > 0)
+                {
+                    scheduleEndPFCPeriod(i, tv[i], bitTime);
+                    priorityPaused[i] = true;
+                }
+            }
+            else
+            {
+                cancelEvent(endPFCMsg[i]);
+                if (tv[i] > 0)
+                {
+                    scheduleEndPFCPeriod(i, tv[i], bitTime);
+                }
+                else
+                {
+                    priorityPaused[i] = false;
+                }
+            }
+        }
+    }
 }

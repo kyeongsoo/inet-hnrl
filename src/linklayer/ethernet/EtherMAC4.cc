@@ -26,9 +26,12 @@ void EtherMAC4::initialize()
 {
     EtherMAC2::initialize();
 
-    // Output Queue
-    queue = check_and_cast<DRRVLANQueue4 *>(
-            getParentModule()->getSubmodule("queue"));
+    // check whether the output queue supports PFC
+    queue = NULL;
+    if (dynamic_cast<DRRVLANQueue4 *>(getParentModule()->getSubmodule("queue")) != NULL)
+    {   // queueType support PFC
+        queue = (DRRVLANQueue4 *)(getParentModule()->getSubmodule("queue"));
+    }
 }
 
 void EtherMAC4::frameReceptionComplete(EtherFrame *frame)
@@ -45,19 +48,26 @@ void EtherMAC4::frameReceptionComplete(EtherFrame *frame)
         numPauseFramesRcvdVector.record(numPauseFramesRcvd);
         processPauseCommand(pauseUnits);
     }
-    else if ((controlFrame=dynamic_cast<EtherControlFrame*>(frame))!=NULL)
+    else if ((controlFrame = dynamic_cast<EtherControlFrame*>(frame)) != NULL)
     {
-        if (controlFrame->getOpcode() == 0x0101)
-        {   // PFC frame
-            PFCPriorityEnableVector pev;
-            PFCTimeVector tv;
-
-            pev = controlFrame->getPev();
-            tv = controlFrame->getTv();
-            queue->processPFCCommand(pev, tv);
+        if (queue != NULL)
+        {   // output queue supports PFC
+            {
+                if (controlFrame->getOpcode() == 0x0101)
+                {   // PFC frame
+                    PFCPriorityEnableVector pev = controlFrame->getPev();
+                    PFCTimeVector tv = controlFrame->getTv();
+                    delete frame;
+                    queue->processPFCCommand(pev, tv, bitTime);
+                }
+                else
+                {   // TODO: implement handling other control frames
+                    delete frame;
+                }
+            }
         }
         else
-        {   // TODO: implement handling other control frames
+        {
             delete frame;
         }
     }

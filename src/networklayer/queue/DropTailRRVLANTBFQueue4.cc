@@ -207,7 +207,8 @@ bool DropTailRRVLANTBFQueue4::enqueue(cMessage *msg)
                 {
                     PFCPriorityEnableVector pev;
                     pev.fill(false);
-                    pev[0] = true; // enable PCF for the lowest priority flow (i.e., non-conformed frames)
+                    pev[1] = true;  // enable PCF for non-conformed frames
+                                    // 1 is the lowest priority per IEEE 802.1Q 2014 Appendix I.4
                     PFCTimeVector tv;
                     tv.fill(pauseUnits[flowIndex]);
                     relay->sendPFCFrameWithVLANAddress(vlanFrame->getSrc(),

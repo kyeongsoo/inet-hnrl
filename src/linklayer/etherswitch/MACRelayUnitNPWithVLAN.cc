@@ -409,6 +409,7 @@ void MACRelayUnitNPWithVLAN::sendPFCFrameWithVLANAddress(MACAddress& address, VI
         char framename[40];
         sprintf(framename, "pfc-%d-%d", getId(), pfcSeqNum++);
         EtherControlFrame *frame = new EtherControlFrame(framename);
+        frame->setOpcode(0x0101);
 //        frame->setPauseTime(pauseUnits);
         frame->getPev() = pev;
         frame->getTv() = tv;

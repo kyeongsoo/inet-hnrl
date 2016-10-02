@@ -24,8 +24,8 @@ cplusplus {{
 #include "Ieee802Ctrl_m.h" // for enums
 #include "VLAN.h"
 typedef std::stack<VLANTag> VLANTagStack;
-typedef std::array<bool, 8> PFCPriorityEnableVector;
-typedef std::array<uint16_t, 8> PFCTimeVector;
+typedef std::array<bool, N_PFC_PRIORITIES> PFCPriorityEnableVector;
+typedef std::array<uint16_t, N_PFC_PRIORITIES> PFCTimeVector;
 }}
 
 

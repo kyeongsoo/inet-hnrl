@@ -25,6 +25,7 @@ import inet.nodes.access.NgnAccessModem;
 import inet.nodes.access.NgnAccessModem2;
 import inet.nodes.access.NgnAccessNode2;
 import inet.nodes.access.NgnAccessNode3;
+import inet.nodes.access.NgnAccessNode4;
 import inet.nodes.access.NgnAccessSplitter;
 import inet.nodes.access.NgnAccessSplitter2;
 import inet.nodes.inet.RouterWithEthernetInterface2;
@@ -149,7 +150,7 @@ network NgnAccessWithStackedVlans
             gates:
                 ethg[3];
         }
-        olt_c: NgnAccessNode2 {
+        olt_c: NgnAccessNode4 {
             parameters:
                 @display("p=513,233");
             gates:

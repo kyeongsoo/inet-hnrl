@@ -20,6 +20,7 @@
 #ifndef __INET_DRRVLANQUEUE4_H
 #define __INET_DRRVLANQUEUE4_H
 
+#include <array>
 #include "EtherFrame_m.h"
 #include "DRRVLANQueue3.h"
 
@@ -38,23 +39,35 @@
  */
 class INET_API DRRVLANQueue4 : public DRRVLANQueue3
 {
-protected:
-    // states
+    protected:
+        // states
+        std::array<bool, N_PFC_PRIORITIES> priorityPaused;
 
+        // self messages
+        std::array<cMessage*, N_PFC_PRIORITIES> endPFCMsg;
 
-protected:
-    /**
-     * Redefined from DRRVLANQueue.
-     */
-    virtual void initialize();
-    virtual cMessage *dequeue();
+    public:
+        DRRVLANQueue4();
+        virtual ~DRRVLANQueue4();
 
-public:
-    /**
-     * Newly defined.
-     */
-    virtual void processPFCCommand(PFCPriorityEnableVector pev,
-            PFCTimeVector tv);
+    protected:
+        /**
+         * Redefined from DRRVLANQueue.
+         */
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
+        virtual cMessage *dequeue();
+
+        /**
+         * Newly defined.
+         */
+        virtual void scheduleEndPFCPeriod(int priority, int pauseUnits, simtime_t bitTime);
+
+    public:
+        /**
+         * Newly defined.
+         */
+        virtual void processPFCCommand(PFCPriorityEnableVector pev, PFCTimeVector tv, simtime_t bitTime);
 };
 
 #endif
