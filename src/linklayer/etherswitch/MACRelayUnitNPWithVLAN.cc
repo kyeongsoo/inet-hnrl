@@ -64,6 +64,7 @@ void MACRelayUnitNPWithVLAN::initialize(int stage)
     if (stage == 0)
     {
         MACRelayUnitNP::initialize();
+        pfcSeqNum = 0;
     }
     else if (stage == 1) // to make sure the following is executed after the normal initialization of other modules (esp. VLANTagger)
     {
@@ -390,5 +391,32 @@ void MACRelayUnitNPWithVLAN::sendPauseFrameWithVLANAddress(MACAddress& address, 
     else
     {
         sendPauseFrame(portno, pauseUnits);
+    }
+}
+
+void MACRelayUnitNPWithVLAN::sendPFCFrameWithVLANAddress(MACAddress& address, VID vid, PFCPriorityEnableVector pev, PFCTimeVector tv)
+{
+    Enter_Method_Silent(); // this function can be used by other modules
+
+    int portno = getPortForVLANAddress(address, vid);
+    if (portno == -1) {
+        EV << getFullPath() << endl;
+        error("There is an error in VLAN configuration.");
+    }
+    else
+    {
+        // create Ethernet PFC frame
+        char framename[40];
+        sprintf(framename, "pfc-%d-%d", getId(), pfcSeqNum++);
+        EtherControlFrame *frame = new EtherControlFrame(framename);
+//        frame->setPauseTime(pauseUnits);
+        frame->getPev() = pev;
+        frame->getTv() = tv;
+
+        frame->setByteLength(ETHER_MAC_FRAME_BYTES+ETHER_PAUSE_COMMAND_BYTES);
+        if (frame->getByteLength() < MIN_ETHERNET_FRAME)
+            frame->setByteLength(MIN_ETHERNET_FRAME);
+
+        send(frame, "lowerLayerOut", portno);
     }
 }

@@ -17,12 +17,15 @@
 
 
 cplusplus {{
+#include <array>
 #include <stack>
 #include "Ethernet.h"
 #include "MACAddress.h"
 #include "Ieee802Ctrl_m.h" // for enums
 #include "VLAN.h"
 typedef std::stack<VLANTag> VLANTagStack;
+typedef std::array<bool, 8> PFCPriorityEnableVector;
+typedef std::array<uint16_t, 8> PFCTimeVector;
 }}
 
 
@@ -31,6 +34,10 @@ class noncobject MACAddress;
 class noncobject MessageId;
 
 class noncobject VLANTagStack;
+
+class noncobject PFCPriorityEnableVector;
+
+class noncobject PFCTimeVector;
 
 enum EtherType;
 
@@ -147,15 +154,15 @@ packet EtherPauseFrame extends EtherFrame
 
 
 //
-// Ethernet control frame
+// Ethernet control frame (currently tailored for PFC frame)
 //
-packet EtherPauseFrame extends EtherFrame
+packet EtherControlFrame extends EthernetIIFrame
 {
-    int opcode; // 2-byte MAC control opcode (e.g., '00-01' for PAUSE, '01-01' for priority-based flow control (PFC)
+    uint16_t opcode; // 2-byte MAC control opcode (e.g., '00-01' for PAUSE, '01-01' for priority-based flow control (PFC)
     
     // below are MAC control parameters; currently only for PFC
-    bool priorityEnableVector[8]; // each element indicating if the corresponding element of the timeVector paramter is valid
-    int timeVector[8]; // a list of eight 2-octet fields
+    PFCPriorityEnableVector pev; // each element indicating if the corresponding element of the timeVector paramter is valid
+    PFCTimeVector tv; // a list of eight 2-octet fields indicating pause times in 512 bit-time units
 }
 
 

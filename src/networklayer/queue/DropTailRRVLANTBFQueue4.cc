@@ -1,4 +1,5 @@
 //
+// Copyright (C) 2016 Kyeong Soo (Joseph) Kim
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -15,11 +16,11 @@
 //
 
 
-#include "DropTailRRVLANTBFQueue3.h"
+#include "DropTailRRVLANTBFQueue4.h"
 
-Define_Module(DropTailRRVLANTBFQueue3);
+Define_Module(DropTailRRVLANTBFQueue4);
 
-void DropTailRRVLANTBFQueue3::initialize(int stage)
+void DropTailRRVLANTBFQueue4::initialize(int stage)
 {
     DropTailRRVLANTBFQueue2::initialize(stage);
 
@@ -51,7 +52,7 @@ void DropTailRRVLANTBFQueue3::initialize(int stage)
     }
 }
 
-void DropTailRRVLANTBFQueue3::handleMessage(cMessage *msg)
+void DropTailRRVLANTBFQueue4::handleMessage(cMessage *msg)
 {
     if (warmupFinished == false)
     {   // start statistics gathering once the warm-up period has passed.
@@ -179,7 +180,7 @@ void DropTailRRVLANTBFQueue3::handleMessage(cMessage *msg)
     }
 }
 
-bool DropTailRRVLANTBFQueue3::enqueue(cMessage *msg)
+bool DropTailRRVLANTBFQueue4::enqueue(cMessage *msg)
 {
     int flowIndex = classifier->classifyPacket(msg);
     int pktByteLength = PK(msg)->getByteLength();
@@ -192,7 +193,7 @@ bool DropTailRRVLANTBFQueue3::enqueue(cMessage *msg)
     }
     else
     {
-        // flow control: send PAUSE if above threshold
+        // priority-based flow control: send PFC frame if above threshold
         // TODO: Implement it for non-stacked VLANs as well
         if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
         {
@@ -204,8 +205,13 @@ bool DropTailRRVLANTBFQueue3::enqueue(cMessage *msg)
                 if ((voqCurrentSize[flowIndex] + pktByteLength > voqThreshold)
                         && (SIMTIME_DBL(simTime()) - pauseLastSent > pauseInterval[flowIndex]))
                 {
-                    relay->sendPauseFrameWithVLANAddress(vlanFrame->getSrc(),
-                            vlanFrame->getVid(), pauseUnits[flowIndex]);
+                    PFCPriorityEnableVector pev;
+                    pev.fill(false);
+                    pev[0] = true; // enable PCF for the lowest priority flow (i.e., non-conformed frames)
+                    PFCTimeVector tv;
+                    tv.fill(pauseUnits[flowIndex]);
+                    relay->sendPFCFrameWithVLANAddress(vlanFrame->getSrc(),
+                            vlanFrame->getVid(), pev, tv);
                     pauseLastSent = SIMTIME_DBL(simTime());
                 }
             }

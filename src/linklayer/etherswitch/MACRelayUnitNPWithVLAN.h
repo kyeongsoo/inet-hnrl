@@ -21,6 +21,7 @@
 
 
 #include <vector>
+#include "EtherFrame_m.h"
 #include "MACRelayUnitNP.h"
 #include "VLAN.h"
 
@@ -73,6 +74,8 @@ class INET_API MACRelayUnitNPWithVLAN : public MACRelayUnitNP
     typedef std::map<VID, PortMap> VLANRegistrationTable;
 
     VLANRegistrationTable vlanTable;    // VLAN registration table
+
+    int pfcSeqNum;                      // counter for PFC frames
 
   protected:
     /** @name Redefined MACRelayUnitNP member functions. */
@@ -170,6 +173,12 @@ class INET_API MACRelayUnitNPWithVLAN : public MACRelayUnitNP
      * PAUSE frame on the given port.
      */
    virtual void sendPauseFrameWithVLANAddress(MACAddress& address, VID vid, int pauseUnits);
+
+   /**
+     * Utility function (for use by subclasses) to send a priority-based
+     * flow control (PFC) frame on the given port.
+     */
+   virtual void sendPFCFrameWithVLANAddress(MACAddress& address, VID vid, PFCPriorityEnableVector pev, PFCTimeVector tv);
    //@}
 };
 
