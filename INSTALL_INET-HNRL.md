@@ -30,14 +30,17 @@ following sections for command line and IDE installations.
 ### If you are using the IDE:
 - **OMNETPP_ROOT**: You should set this linked resource variable for the root
   directory of OMNeT++ installation as follows:
-  1. Open the OMNeT++ IDE.
-  2. Go to "Window->Preferences->General->Workspace->Linked resources" and
-     define the path variable.
+  - Open the OMNeT++ IDE.
+  - Go to "Window->Preferences->General->Workspace->Linked resources" and define
+    the path variable.
 - If you install SQLite in one of the standard places (e.g., '/usr' or
   '/usr/local'), you can skip step. Otherwise, you should add directories for
-  SQLite header and SQLite library as follows:
-  1. Open the OMNeT++ IDE.
-  2. Click 'inet-hnrl' in the 'Project Explorer' panel and go to 'Properties' by
-     right clicking.
-  3. Go to "C/C++ General->Paths and Symbols" and add the said directories for
-     SQLite in the 'Includes' and 'Library Paths' panels.
+  SQLite header and SQLite library as well as SQLite library itself as follows:
+  - Open the OMNeT++ IDE.
+  - Click 'inet-hnrl' in the 'Project Explorer' panel and go to 'Properties' by
+    right clicking.
+  - Go to "C/C++ General->Paths and Symbols" and add the said directories for
+    SQLite in the 'Includes' and 'Library Paths' panels.
+  - Go to "OMNeT++->Makemake", click "src:...", and click "Options" on the right
+    panel under "Build" section; go to "Link" tab, and add "sqlite3" under
+    "Addtional libraries to link with: (-l option).
