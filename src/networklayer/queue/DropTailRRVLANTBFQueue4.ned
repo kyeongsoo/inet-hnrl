@@ -23,7 +23,7 @@ package inet.networklayer.queue;
 // shaper based on external token bucket meter, and round-robin (RR) scheduler
 // to be used in network interfaces.
 //
-// Compared to DropTailRRVLANTBFQueue2, a major new feature is the capability
+// Compared to DropTailRRVLANTBFQueue3, a major new feature is the capability
 // of back pressure flow control: When a VOQ passes a threshold, it can send an
 // Ethernet priority-based flow control (PFC) frame to a port, from which
 // a flow corresponding to the VOQ comes. This is essential to the implementation

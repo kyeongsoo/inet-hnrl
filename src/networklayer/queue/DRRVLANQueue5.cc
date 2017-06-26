@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2014 Kyeong Soo (Joseph) Kim
+// Copyright (C) 2017 Kyeong Soo (Joseph) Kim
 // Copyright (C) 2005 Andras Varga
 //
 // This program is free software; you can redistribute it and/or
@@ -17,59 +17,11 @@
 //
 
 
-#include "DRRVLANQueue3.h"
+#include "DRRVLANQueue5.h"
 
-Define_Module(DRRVLANQueue3);
+Define_Module(DRRVLANQueue5);
 
-DRRVLANQueue3::DRRVLANQueue3()
-{
-}
-
-DRRVLANQueue3::~DRRVLANQueue3()
-{
-#ifndef NDEBUG
-    for (int i = 0; i < numFlows; i++)
-    {
-        delete conformedCounterVector[i];
-        delete nonconformedCounterVector[i];
-    }
-#endif
-}
-
-void DRRVLANQueue3::initialize()
-{
-    DRRVLANQueue::initialize();
-
-     // DRR scheduler
-     conformedCounters.assign(numFlows, 0);
-     nonconformedCounters.assign(numFlows, 0);
-
-     // statistics
-     numConformedBitsSent.assign(numFlows, 0.0);
-     numNonconformedBitsSent.assign(numFlows, 0.0);
-     numConformedPktsSent.assign(numFlows, 0);
-     numNonconformedPktsSent.assign(numFlows, 0);
-
-     // debugging
-#ifndef NDEBUG
-     for (int i=0; i < numFlows; i++)
-     {
-         cOutVector *vector;
-         std::stringstream vname;
-
-         vname << "conformed bytes for flow[" << i << "]";
-         vector = new cOutVector((vname.str()).c_str());
-         conformedCounterVector.push_back(vector);
-
-         vname.str(std::string());  // clear string stream
-         vname << "non-conformed bytes for flow[" << i << "]";
-         vector = new cOutVector((vname.str()).c_str());
-         nonconformedCounterVector.push_back(vector);
-     }
-#endif
-}
-
-void DRRVLANQueue3::handleMessage(cMessage *msg)
+void DRRVLANQueue5::handleMessage(cMessage *msg)
 {
     if (warmupFinished == false)
     {   // start statistics gathering once the warm-up period has passed.
@@ -91,8 +43,6 @@ void DRRVLANQueue3::handleMessage(cMessage *msg)
 // DEBUG
         int pktByteLength = PK(msg)->getByteLength();
         int color = tbm[flowIndex]->meterPacket(msg);   // result of metering; 0 for conformed and 1 for non-conformed packet
-//        cQueue *queue = voq[flowIndex];
-//        bool queueEmpty = queue->isEmpty(); // status of queue before enqueueing the packet
         if (warmupFinished == true)
         {
             numPktsReceived[flowIndex]++;
@@ -118,6 +68,10 @@ void DRRVLANQueue3::handleMessage(cMessage *msg)
                 } else {
                     numNonconformedBitsSent[flowIndex] += pktLength;
                     numNonconformedPktsSent[flowIndex]++;
+                    if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
+                    {   // mark a non-conformed packet if the packet is IEEE 802.1Q frame
+                        ((EthernetIIFrameWithVLAN *)msg)->setDei(true);
+                    }
                 }
             }
             sendOut(msg);
@@ -191,14 +145,17 @@ void DRRVLANQueue3::handleMessage(cMessage *msg)
             sprintf(buf, "q rcvd: %d\nq dropped: %d", numPktsReceived[flowIndex], numPktsDropped[flowIndex]);
             getDisplayString().setTagArg("t", 0, buf);
         }
-    }   // end of if () for self message
+    }   // end of if () for non-self message
     else
-    {   // self message is not expected; something wrong.
-        error("%s::handleMessage: Unexpected self message", getFullPath().c_str());
+    {   // endPFCMsg
+        // DEBUG
+        ASSERT(priorityPaused[msg->getKind()] == true);
+        // DEBUG
+        priorityPaused[msg->getKind()] = false;
     }
 }
 
-cMessage *DRRVLANQueue3::dequeue()
+cMessage *DRRVLANQueue5::dequeue()
 {
     cMessage *msg = (cMessage *)NULL;
 
@@ -229,108 +186,87 @@ cMessage *DRRVLANQueue3::dequeue()
             }
             return msg;
         }
-        // else
-        // {
-        //     break;
-        // }
-
-        // if (!voq[flowIndex]->isEmpty() && (conformedCounters[flowIndex] > 0))
-        // {
-        //     conformedList.push_back(flowIndex);
-        // }
     }   // end of while ()
 
-    // check then the list of queues with non-zero non-conformed bytes and do regular DRR scheduling
-
-    if (nonconformedList.empty())
+    // Check then the list of queues with non-zero non-conformed bytes and do regular
+    // DRR scheduling only when priorityPaused[1] is false; we associate non-conformed
+    // traffic with the priority value of 1.
+    //
+    // Note that, according to IEEE 802.1Q 2014 Appendix I.4, the priority value of 1
+    // is associated with 'Background' traffic and has a lower priority than the default
+    // value of 0 for 'Best Effort' traffic.
+    if (priorityPaused[1] == false)
     {
-        continuation = false;
-        return (msg);
-    }
-    else
-    {
-        while (!nonconformedList.empty())
+        if (nonconformedList.empty())
         {
-            int flowIndex = nonconformedList.front();
-            nonconformedList.pop_front();
-            // DEBUG
-            ASSERT(!voq[flowIndex]->isEmpty());
-            // DEBUG
-            deficitCounters[flowIndex] += continuation ? 0 : quanta[flowIndex];
-            continuation = false;   // reset the flag
-
-            int pktByteLength = PK(voq[flowIndex]->front())->getByteLength();
-            if ((deficitCounters[flowIndex] >= pktByteLength) && (nonconformedCounters[flowIndex] >= pktByteLength))
-            {   // serve the packet
-                msg = (cMessage *)voq[flowIndex]->pop();
-                voqCurrentSize[flowIndex] -= pktByteLength;
-                deficitCounters[flowIndex] -= pktByteLength;
-                nonconformedCounters[flowIndex] -= pktByteLength;
-#ifndef NDEBUG
-                nonconformedCounterVector[flowIndex]->record(nonconformedCounters[flowIndex]);
-#endif
-                // update statistics
-                numNonconformedBitsSent[flowIndex] += 8*pktByteLength;
-                numNonconformedPktsSent[flowIndex]++;
-            }
-
-            // check whether the deficit and non-conformed counter values are enough for the HOL packet
-            if (!voq[flowIndex]->isEmpty())
+            continuation = false;
+            return (msg);
+        }
+        else
+        {
+            while (!nonconformedList.empty())
             {
-                pktByteLength = PK(voq[flowIndex]->front())->getByteLength();                
-                if (nonconformedCounters[flowIndex] >= pktByteLength)
+                int flowIndex = nonconformedList.front();
+                nonconformedList.pop_front();
+                // DEBUG
+                ASSERT(!voq[flowIndex]->isEmpty());
+                // DEBUG
+                deficitCounters[flowIndex] += continuation ? 0 : quanta[flowIndex];
+                continuation = false;   // reset the flag
+
+                int pktByteLength = PK(voq[flowIndex]->front())->getByteLength();
+                if ((deficitCounters[flowIndex] >= pktByteLength) && (nonconformedCounters[flowIndex] >= pktByteLength))
+                {   // serve the packet
+                    msg = (cMessage *) voq[flowIndex]->pop();
+                    if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
+                    {   // mark a non-conformed packet if the packet is IEEE 802.1Q frame
+                        ((EthernetIIFrameWithVLAN *)msg)->setDei(true);
+                    }
+
+                    voqCurrentSize[flowIndex] -= pktByteLength;
+                    deficitCounters[flowIndex] -= pktByteLength;
+                    nonconformedCounters[flowIndex] -= pktByteLength;
+#ifndef NDEBUG
+                    nonconformedCounterVector[flowIndex]->record(nonconformedCounters[flowIndex]);
+#endif
+                    // update statistics
+                    numNonconformedBitsSent[flowIndex] += 8 * pktByteLength;
+                    numNonconformedPktsSent[flowIndex]++;
+                }
+
+                // check whether the deficit and non-conformed counter values are enough for the HOL packet
+                if (!voq[flowIndex]->isEmpty())
                 {
-                    if (deficitCounters[flowIndex] >= pktByteLength)
-                    {   // set the flag and put the index back to the front of the list
-                        continuation = true;
-                        nonconformedList.push_front(flowIndex);
+                    pktByteLength = PK(voq[flowIndex]->front())->getByteLength();
+                    if (nonconformedCounters[flowIndex] >= pktByteLength)
+                    {
+                        if (deficitCounters[flowIndex] >= pktByteLength)
+                        {   // set the flag and put the index back to the front of the list
+                            continuation = true;
+                            nonconformedList.push_front(flowIndex);
+                        }
+                        else
+                        {
+                            nonconformedList.push_back(flowIndex);
+                        }
                     }
                     else
                     {
-                        nonconformedList.push_back(flowIndex);
+                        deficitCounters[flowIndex] = 0;
                     }
                 }
                 else
                 {
                     deficitCounters[flowIndex] = 0;
                 }
-            }
-            else
-            {
-                deficitCounters[flowIndex] = 0;
-            }
 
-            if (msg != NULL)
-            {
-                break;  // from the while loop
-            }
-        } // end of while()
-    }
+                if (msg != NULL)
+                {
+                    break;  // from the while loop
+                }
+            } // end of while()
+        }
+    } // end of if() for checking priorityPaused[1]
 
     return (msg);   // just in case
-}
-
-void DRRVLANQueue3::finish()
-{
-    DRRVLANQueue::finish();
-
-    for (int i=0; i < numFlows; i++)
-    {
-        std::stringstream ss_conformed_bits_sent, ss_conformed_pkts_sent, ss_nonconformed_bits_sent, ss_nonconformed_pkts_sent;
-        ss_conformed_bits_sent << "conformed bits sent from flow[" << i << "]";
-        ss_conformed_pkts_sent << "conformed packets sent from flow[" << i << "]";
-        ss_nonconformed_bits_sent << "non-conformed bits sent from flow[" << i << "]";
-        ss_nonconformed_pkts_sent << "non-conformed packets sent from flow[" << i << "]";
-        recordScalar((ss_conformed_bits_sent.str()).c_str(), numConformedBitsSent[i]);
-        recordScalar((ss_conformed_pkts_sent.str()).c_str(), numConformedPktsSent[i]);
-        recordScalar((ss_nonconformed_bits_sent.str()).c_str(), numNonconformedBitsSent[i]);
-        recordScalar((ss_nonconformed_pkts_sent.str()).c_str(), numNonconformedPktsSent[i]);
-
-        // debugging
-#ifndef NDEBUG
-        std::stringstream ss_debug_info;
-        ss_debug_info << "DEBUG: total - conformed/non-conformed bits from flow[" << i << "]";
-        recordScalar((ss_debug_info.str()).c_str(), numBitsSent[i] - (numConformedBitsSent[i] + numNonconformedBitsSent[i]));
-#endif
-    }
 }

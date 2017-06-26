@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2014 Kyeong Soo (Joseph) Kim
+// Copyright (C) 2017 Kyeong Soo (Joseph) Kim
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -23,19 +23,23 @@ package inet.networklayer.queue;
 // shaper based on external token bucket meter, and round-robin (RR) scheduler
 // to be used in network interfaces.
 //
-// Compared to DropTailRRVLANTBFQueue, major difference is the capability to
-// assign different TBF parameters per VOQ.
+// Unlike DropTailRRVLANTBFQueue3 and DropTailRRVLANTBFQueue4, which implement
+// back pressure and priority-based flow controls respectively, it discards
+// frames with drop eligible frames (i.e., frames with drop eligible indicator
+// (DEI) field set) when a VOQ passes a threshold.
+// This is essential to the implementation of hybrid ISP traffic control.
 //
 // Conforms to the OutputQueue interface.
 //
 // @author Kyeong Soo (Joseph) Kim <kyeongsoo.kim@gmail.com>
-// @date   2014-02-23
+// @date   2017-06-26
 //
-simple DropTailRRVLANTBFQueue2 like OutputQueue
+simple DropTailRRVLANTBFQueue5 like OutputQueue
 {
     parameters:
-        int numFlows = default(1);	// number of per-VLAN queues
-        int voqSize @unit(B) = default(15220000B);	// per-flow virtual output queue (VOQ) size; default value corresponds to 10,000 maximum-sized VLAN frames.
+        int numFlows = default(1); // number of flows (i.e., per-VLAN queues)
+        int voqSize @unit(B) = default(15220000B); // per-flow virtual output queue (VOQ) size; default value corresponds to 10,000 maximum-sized VLAN frames.
+		int voqThreshold @unit(B) = default(int(0.25*this.voqSize)*1B); // VOQ threshold to detect link congestion
 		string classifierClass = default("BasicVLANClassifier");  // class that inherits from IQoSClassifier
 		string vids = default("");	// VIDs used for initialization of index table
         @display("i=block/queue");
@@ -43,6 +47,3 @@ simple DropTailRRVLANTBFQueue2 like OutputQueue
         input in;
         output out;
 }
-
-
-

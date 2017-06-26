@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 Kyeong Soo (Joseph) Kim
+// Copyright (C) 2017 Kyeong Soo (Joseph) Kim
 // Copyright (C) 2005 Andras Varga
 //
 // This program is free software; you can redistribute it and/or
@@ -17,38 +17,19 @@
 //
 
 
-#ifndef __INET_DROPTAILVLANTBFQUEUE4_H
-#define __INET_DROPTAILVLANTBFQUEUE4_H
+#ifndef __INET_DROPTAILVLANTBFQUEUE5_H
+#define __INET_DROPTAILVLANTBFQUEUE5_H
 
 #include "DropTailRRVLANTBFQueue3.h"
 
 /**
  * Drop-tail queue with VLAN classifier, token bucket filter (TBF) traffic
  * shaper based on external token bucket meter, round-robin (RR) scheduler,
- * and back pressure flow control based on IEEE 802.1Q priority-based flow
- * control (PFC).
+ * and congestion control based on dropping marked packets.
  * See NED for more info.
  */
-class INET_API DropTailRRVLANTBFQueue4 : public DropTailRRVLANTBFQueue3
+class INET_API DropTailRRVLANTBFQueue5 : public DropTailRRVLANTBFQueue3
 {
-  protected:
-    // relay unit
-    MACRelayUnitNPWithVLAN *relay;
-
-    // flow control
-    IntVector pauseUnits; ///< pause time in 512 bit times
-    DoubleVector pauseInterval; ///< pause time in second
-    double pauseLastSent; ///< last time a pause frame was sent
-
-    // RR scheduler
-    int voqThreshold; ///< VOQ threshold in byte to detect link congestion
-
-
-//    // timer
-//    MsgVector conformityTimer;  ///< vector of timer indicating that enough tokens will be available for the transmission of the HOL frame
-
-  public:
-
   protected:
     /**
      * Redefined from PassiveQueueBase.
@@ -57,5 +38,3 @@ class INET_API DropTailRRVLANTBFQueue4 : public DropTailRRVLANTBFQueue3
 };
 
 #endif
-
-

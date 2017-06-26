@@ -1,5 +1,4 @@
 //
-// Copyright (C) 2016 Kyeong Soo (Joseph) Kim
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -16,11 +15,11 @@
 //
 
 
-#include "DropTailRRVLANTBFQueue4.h"
+#include "DropTailRRVLANTBFQueue5.h"
 
-Define_Module(DropTailRRVLANTBFQueue4);
+Define_Module(DropTailRRVLANTBFQueue5);
 
-bool DropTailRRVLANTBFQueue4::enqueue(cMessage *msg)
+bool DropTailRRVLANTBFQueue5::enqueue(cMessage *msg)
 {
     int flowIndex = classifier->classifyPacket(msg);
     int pktByteLength = PK(msg)->getByteLength();
@@ -33,8 +32,7 @@ bool DropTailRRVLANTBFQueue4::enqueue(cMessage *msg)
     }
     else
     {
-        // priority-based flow control: send PFC frame if above threshold
-        // TODO: Implement it for non-stacked VLANs as well
+        // congestion control: drop marked packets if above threshold
         if (dynamic_cast<EthernetIIFrameWithVLAN *>(msg) != NULL)
         {
             EthernetIIFrameWithVLAN *vlanFrame = dynamic_cast<EthernetIIFrameWithVLAN *>(msg);
@@ -42,18 +40,11 @@ bool DropTailRRVLANTBFQueue4::enqueue(cMessage *msg)
 
             if (tpid == 0x88A8)
             {   // stacked-VLAN frame
-                if ((voqCurrentSize[flowIndex] + pktByteLength > voqThreshold)
-                        && (SIMTIME_DBL(simTime()) - pauseLastSent > pauseInterval[flowIndex]))
+                if ((voqCurrentSize[flowIndex] + pktByteLength > voqThreshold) && vlanFrame->getDei())
                 {
-                    PFCPriorityEnableVector pev;
-                    pev.fill(false);
-                    pev[1] = true;  // enable PCF for non-conformed frames
-                                    // 1 is the lowest priority per IEEE 802.1Q 2014 Appendix I.4
-                    PFCTimeVector tv;
-                    tv.fill(pauseUnits[flowIndex]);
-                    relay->sendPFCFrameWithVLANAddress(vlanFrame->getSrc(),
-                            vlanFrame->getVid(), pev, tv);
-                    pauseLastSent = SIMTIME_DBL(simTime());
+                    EV << "VOQ[" << flowIndex << "] exceeds threshold, dropping marked packet.\n";
+                    delete vlanFrame;
+                    return true;
                 }
             }
         }

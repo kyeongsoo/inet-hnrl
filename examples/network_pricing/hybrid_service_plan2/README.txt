@@ -1,4 +1,4 @@
-isp_traffic_control2
+hybrid_service_plan2
 ====================
 
 Shortdesc:  A set of simulation models and scenarios for the investigation of
