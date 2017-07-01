@@ -141,8 +141,10 @@ void VLANTagger2::tagPushFrame(EthernetIIFrameWithVLAN *frame, VLANFrameVector& 
 
     EthernetIIFrameWithVLAN *vlanFrame = frame->dup();
     VLANTag vlanTag = {frame->getTpid(), frame->getPcp(), frame->getDei(), frame->getVid()};
-    vlanFrame->getInnerTags().push(vlanTag);
+    vlanFrame->setPcp(vlanTag.pcp); // from C-TAG
+    vlanFrame->setDei(vlanTag.dei); // from C-TAG
     vlanFrame->setTpid(0x88A8); // for S-TAG
+    vlanFrame->getInnerTags().push(vlanTag);
     vlanFrame->setByteLength(vlanFrame->getByteLength() + ETHER_VLAN_TAG_LENGTH); // double tags
     delete frame;
 

@@ -194,6 +194,8 @@ void VLANTagger::tagFrame(EthernetIIFrame *frame, VLANFrameVector& vlanFrames)
     vlanFrame->setSrc(frame->getSrc());
     vlanFrame->setEtherType(frame->getEtherType());
     vlanFrame->setTpid(0x8100); // for VLAN tag
+    vlanFrame->setPcp(0);
+    vlanFrame->setDei(false);
     vlanFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_VLAN_TAG_LENGTH);
     cPacket *pkt = frame->decapsulate();
     if (pkt != NULL)
